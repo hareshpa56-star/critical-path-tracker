@@ -356,16 +356,27 @@
   td.task-name {
     font-weight: 700; color: var(--text);
     font-family: var(--font-display); letter-spacing: -0.2px;
+    max-width: 200px; word-wrap: break-word;
   }
   td.task-name .task-desc {
     font-weight: 400; font-size: 11px; color: var(--text-muted);
     font-family: var(--font-body); letter-spacing: 0;
     margin-top: 2px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  td.goal { max-width: 340px; line-height: 1.5; color: var(--text-secondary); }
-  td.slg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  td.goal { min-width: 300px; max-width: 480px; line-height: 1.5; color: var(--text-secondary); }
+  td.slg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; cursor: pointer; }
   td.slg a { color: var(--accent); text-decoration: none; font-weight: 600; }
   td.slg a:hover { text-decoration: underline; }
+  .slg-edit-input {
+    width: 100%; font-size: 12px; padding: 4px 6px; border: 1.5px solid var(--accent);
+    border-radius: 6px; background: var(--surface); color: var(--text);
+    font-family: var(--font-body); outline: none;
+  }
+  .slg-hint { font-size: 9px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
+  .due-date-clickable { cursor: pointer; border-radius: 6px; padding: 2px 4px; transition: background 0.15s; }
+  .due-date-clickable:hover { background: var(--accent-light); }
 
 
   /* Due date */
@@ -645,7 +656,7 @@
   .last-week-goal {
     margin-top: 6px; padding: 5px 8px; border-left: 3px solid var(--orange);
     background: var(--orange-bg); border-radius: 0 6px 6px 0; font-size: 11px;
-    line-height: 1.4; color: var(--text-secondary); max-width: 340px;
+    line-height: 1.4; color: var(--text-secondary); max-width: 480px;
   }
   .last-week-goal .lwg-label {
     font-size: 9px; text-transform: uppercase; color: var(--orange); font-weight: 700;
@@ -1474,12 +1485,12 @@ function renderTable() {
         </select>
       </td>
       <td>
-        <div class="due-date ${dueDateClass}">
+        <div class="due-date ${dueDateClass} due-date-clickable" onclick="inlineEditDueDate(${realIdx}, this)" title="Click to change date">
           ${t.dueDate ? fmtDueDate(t.dueDate) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}
           ${overdueTask ? '<span class="overdue-flag">Overdue</span>' : ''}
         </div>
       </td>
-      <td class="slg">${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
+      <td class="slg" onclick="inlineEditSlg(${realIdx}, this)" title="Click to edit SLG">${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
       <td>
         <select class="quick-select select-epic" onchange="quickEpicOwner(${realIdx}, this.value)" title="Change Epic Owner">
           ${owners.epic.map(o => `<option value="${esc(o)}" ${t.epicOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
@@ -1931,6 +1942,62 @@ function saveInlineGoal(idx) {
   const newGoal = textarea.value.trim();
   if (newGoal !== tasks[idx].goal) {
     tasks[idx].goal = newGoal;
+    save();
+  }
+  isEditingInline = false;
+  renderTable();
+}
+
+// ── Inline Due Date Editing ──
+function inlineEditDueDate(idx, el) {
+  isEditingInline = true;
+  const current = tasks[idx].dueDate || '';
+  const td = el.parentElement;
+  td.innerHTML = `<input type="date" class="slg-edit-input" id="dueDateEdit-${idx}" value="${current}" onblur="saveInlineDueDate(${idx})">`;
+  const input = document.getElementById('dueDateEdit-' + idx);
+  input.focus();
+  input.showPicker?.();
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { e.preventDefault(); isEditingInline = false; renderTable(); }
+    if (e.key === 'Enter') { e.preventDefault(); saveInlineDueDate(idx); }
+  });
+  input.addEventListener('change', function() { saveInlineDueDate(idx); });
+}
+function saveInlineDueDate(idx) {
+  const input = document.getElementById('dueDateEdit-' + idx);
+  if (!input) return;
+  const newDate = input.value;
+  if (newDate !== (tasks[idx].dueDate || '')) {
+    tasks[idx].dueDate = newDate;
+    save();
+  }
+  isEditingInline = false;
+  renderTable();
+}
+
+// ── Inline SLG Editing ──
+function inlineEditSlg(idx, el) {
+  if (event) event.stopPropagation();
+  isEditingInline = true;
+  const current = tasks[idx].slg || '';
+  el.innerHTML = `
+    <input type="text" class="slg-edit-input" id="slgEdit-${idx}" value="${esc(current)}" placeholder="SLG # or Sherlock URL" onblur="saveInlineSlg(${idx})">
+    <div class="slg-hint">Paste Sherlock URL or enter SLG #. Enter to save.</div>
+  `;
+  const input = document.getElementById('slgEdit-' + idx);
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { e.preventDefault(); isEditingInline = false; renderTable(); }
+    if (e.key === 'Enter') { e.preventDefault(); saveInlineSlg(idx); }
+  });
+}
+function saveInlineSlg(idx) {
+  const input = document.getElementById('slgEdit-' + idx);
+  if (!input) return;
+  const newSlg = normalizeSlg(input.value.trim());
+  if (newSlg !== (tasks[idx].slg || '')) {
+    tasks[idx].slg = newSlg;
     save();
   }
   isEditingInline = false;
