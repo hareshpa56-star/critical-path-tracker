@@ -777,7 +777,7 @@
     <button class="btn btn-print" onclick="printView()" title="Print meeting view">&#9113; Print</button>
     <button class="btn btn-email" onclick="sendEmail()">&#9993; Email</button>
     <button class="btn btn-primary" onclick="openAddModal()">+ Add Task</button>
-    <button class="btn btn-icon btn-ghost" onclick="exportData()" title="Export JSON">&#8681;</button>
+    <button class="btn btn-icon btn-ghost" onclick="fullBackup()" title="Download full backup (tasks + checklists)">&#8681;</button>
     <button class="btn btn-icon btn-ghost" onclick="importData()" title="Import JSON">&#8679;</button>
     <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
   </div>
@@ -1837,23 +1837,47 @@ function sendEmail() {
 }
 
 // ── Import/Export ──
-function exportData() {
-  const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'critical_path_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+async function fullBackup() {
+  try {
+    const res = await fetch('/api/backup', { headers: authHeaders() });
+    if (res.ok) {
+      const blob = await res.blob();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'cp_backup_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+    } else {
+      // Fallback to local tasks-only export
+      const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'critical_path_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+    }
+  } catch(e) {
+    const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'critical_path_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+  }
 }
 function importData() { document.getElementById('importFile').click(); }
 function handleImport(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = async function(ev) {
     try {
       const data = JSON.parse(ev.target.result);
       if (Array.isArray(data)) {
+        // Legacy format: tasks-only array
         tasks = data;
         tasks.forEach(normalizeTask);
         save(); buildFilters(); populateQuickAdd(); renderTable();
+      } else if (data.tasks) {
+        // Full backup format: { tasks, checklists, exportedAt }
+        if (!confirm('Restore full backup? This will overwrite all tasks and checklists.')) return;
+        try {
+          await fetch('/api/restore', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
+        } catch(err) {}
+        tasks = data.tasks;
+        tasks.forEach(normalizeTask);
+        buildFilters(); populateQuickAdd(); renderTable();
       }
     } catch(err) { alert('Invalid JSON file'); }
   };

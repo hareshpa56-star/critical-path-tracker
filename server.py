@@ -172,6 +172,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             with LOCK:
                 data = load_checklist()
             self.send_json(200, data)
+        elif self.path == '/api/backup':
+            if not check_auth(self):
+                return self.send_unauthorized()
+            with LOCK:
+                backup = {
+                    "tasks": load_data(),
+                    "checklists": load_checklist(),
+                    "exportedAt": datetime.now().isoformat()
+                }
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Disposition',
+                             f'attachment; filename="cp_backup_{datetime.now().strftime("%Y%m%d")}.json"')
+            self.end_headers()
+            self.wfile.write(json.dumps(backup, indent=2).encode())
         else:
             return super().do_GET()
 
@@ -209,6 +224,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 items = json.loads(body)
                 with LOCK:
                     save_checklist(items)
+                self.send_json(200, {"ok": True})
+            except json.JSONDecodeError:
+                self.send_json(400, {"error": "Invalid JSON"})
+
+        elif self.path == '/api/restore':
+            if not check_auth(self):
+                return self.send_unauthorized()
+            try:
+                backup = json.loads(body)
+                with LOCK:
+                    if 'tasks' in backup:
+                        save_data(backup['tasks'])
+                    if 'checklists' in backup:
+                        save_checklist(backup['checklists'])
                 self.send_json(200, {"ok": True})
             except json.JSONDecodeError:
                 self.send_json(400, {"error": "Invalid JSON"})
