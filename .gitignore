@@ -1,0 +1,4 @@
+critical_path_data.json
+checklist_data.json
+__pycache__/
+*.pyc

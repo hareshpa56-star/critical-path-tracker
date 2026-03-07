@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLHS Analyst Checklists</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --bg-mesh: linear-gradient(135deg, #f4f2ee 0%, #e8e4dc 40%, #f0ece4 100%);
+    --surface: #ffffff;
+    --surface2: #f7f5f1;
+    --surface-glass: rgba(255,255,255,0.82);
+    --border: #ddd8ce;
+    --border-hover: #c4bfb3;
+    --text: #1c1917;
+    --text-secondary: #57534e;
+    --text-muted: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --accent-hover: #1d4ed8;
+    --accent-glow: rgba(37,99,235,0.12);
+    --red: #dc2626; --red-bg: #fef2f2;
+    --orange: #d97706; --orange-bg: #fffbeb;
+    --green: #16a34a; --green-bg: #f0fdf4;
+    --blue: #2563eb; --blue-bg: #eff6ff;
+    --purple: #7c3aed; --purple-bg: #f5f3ff;
+    --cyan: #0891b2; --cyan-bg: #ecfeff;
+    --shadow-sm: 0 1px 2px rgba(28,25,23,0.04);
+    --shadow: 0 2px 8px rgba(28,25,23,0.06), 0 1px 2px rgba(28,25,23,0.04);
+    --shadow-md: 0 8px 24px rgba(28,25,23,0.08), 0 2px 6px rgba(28,25,23,0.04);
+    --radius: 12px;
+    --radius-lg: 16px;
+    --font-display: 'Bricolage Grotesque', serif;
+    --font-body: 'Instrument Sans', sans-serif;
+    --grid-color: rgba(28,25,23,0.03);
+  }
+  [data-theme="dark"] {
+    --bg: #0c0c0f;
+    --bg-mesh: linear-gradient(135deg, #0c0c0f 0%, #111118 40%, #0e0e14 100%);
+    --surface: #16161d;
+    --surface2: #1e1e28;
+    --surface-glass: rgba(22,22,29,0.88);
+    --border: #2a2a38;
+    --border-hover: #3d3d50;
+    --text: #ececf1;
+    --text-secondary: #a1a1b5;
+    --text-muted: #5c5c72;
+    --accent: #5b8af5;
+    --accent-light: #151b30;
+    --accent-hover: #7ba3ff;
+    --accent-glow: rgba(91,138,245,0.15);
+    --red: #f87171; --red-bg: #1f1215;
+    --orange: #fbbf24; --orange-bg: #1f1a0e;
+    --green: #4ade80; --green-bg: #0e1f15;
+    --blue: #60a5fa; --blue-bg: #101828;
+    --purple: #a78bfa; --purple-bg: #1a1530;
+    --cyan: #22d3ee; --cyan-bg: #0c1a20;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.2);
+    --grid-color: rgba(255,255,255,0.02);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body); background: var(--bg-mesh); color: var(--text);
+    min-height: 100vh; transition: background 0.4s ease, color 0.3s ease;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  /* Header */
+  .header {
+    background: var(--surface-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 38px; height: 38px; border-radius: 10px; background: var(--purple);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; font-family: var(--font-display);
+    letter-spacing: -0.5px;
+  }
+  .header h1 {
+    font-family: var(--font-display); font-size: 20px; font-weight: 800;
+    color: var(--text); letter-spacing: -0.5px;
+  }
+  .header h1 span {
+    color: var(--text-muted); font-weight: 400; font-size: 13px;
+    margin-left: 8px; letter-spacing: 0; font-family: var(--font-body);
+  }
+  .header-right { display: flex; gap: 6px; align-items: center; }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-secondary); transition: all 0.2s; display: inline-flex;
+    align-items: center; gap: 6px; font-family: var(--font-body);
+    text-decoration: none;
+  }
+  .btn:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-ghost { background: transparent; border-color: transparent; }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-dark-toggle { font-size: 18px; padding: 6px 10px; background: transparent; border-color: transparent; line-height: 1; }
+  .btn-reset { background: var(--orange-bg); border-color: transparent; color: var(--orange); }
+  .btn-reset:hover { background: var(--orange); color: #fff; }
+
+  /* Layout */
+  .page { padding: 24px 32px 40px; position: relative; z-index: 1; }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    align-items: center;
+  }
+  .summary-stat {
+    background: var(--surface-glass); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px 18px; box-shadow: var(--shadow-sm);
+  }
+  .summary-stat .sv { font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1; }
+  .summary-stat .sl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-top: 3px; }
+
+  /* Analyst cards */
+  .analyst-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 20px;
+  }
+  .analyst-card {
+    background: var(--surface-glass); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    overflow: hidden; box-shadow: var(--shadow);
+    animation: fadeUp 0.4s ease both;
+  }
+  .analyst-card:nth-child(2) { animation-delay: 0.05s; }
+  .analyst-card:nth-child(3) { animation-delay: 0.1s; }
+  .analyst-card:nth-child(4) { animation-delay: 0.15s; }
+  .analyst-card:nth-child(5) { animation-delay: 0.2s; }
+  .analyst-card:nth-child(6) { animation-delay: 0.25s; }
+  .analyst-header {
+    padding: 16px 20px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .analyst-name {
+    font-family: var(--font-display); font-size: 16px; font-weight: 800;
+    letter-spacing: -0.3px; color: var(--text);
+  }
+  .analyst-progress {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+  }
+  .analyst-progress .done-count { color: var(--green); font-weight: 700; }
+  .analyst-linked {
+    font-size: 11px; color: var(--text-muted); padding: 0 20px; margin-top: 12px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .linked-tasks {
+    padding: 8px 20px 4px; display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .linked-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    background: var(--accent-light); color: var(--accent); border: 1px solid var(--border);
+    text-decoration: none; transition: all 0.15s; cursor: pointer;
+  }
+  .linked-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .linked-chip .lc-status {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Checklist items */
+  .checklist { padding: 8px 12px 12px; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 8px;
+    border-bottom: 1px solid var(--border); transition: background 0.15s;
+    border-radius: 6px; margin-bottom: 1px;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: var(--accent-light); }
+  .check-item.done { opacity: 0.5; }
+  .check-item.done .check-text { text-decoration: line-through; }
+  .check-box {
+    width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent);
+    margin-top: 1px; flex-shrink: 0;
+  }
+  .check-body { flex: 1; min-width: 0; }
+  .check-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .check-meta {
+    display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: wrap;
+  }
+  .check-link {
+    font-size: 10px; font-weight: 600; color: var(--accent); text-decoration: none;
+    padding: 1px 7px; border-radius: 10px; background: var(--accent-light);
+    transition: all 0.15s;
+  }
+  .check-link:hover { background: var(--accent); color: #fff; }
+  .check-date { font-size: 10px; color: var(--text-muted); }
+  .check-actions { opacity: 0; transition: opacity 0.15s; display: flex; gap: 2px; flex-shrink: 0; }
+  .check-item:hover .check-actions { opacity: 1; }
+  .check-actions button {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    padding: 4px 6px; font-size: 13px; border-radius: 6px; transition: all 0.15s;
+  }
+  .check-actions button:hover { color: var(--red); background: var(--red-bg); }
+
+  /* Add item row */
+  .add-item-row {
+    display: flex; gap: 6px; padding: 8px 12px 12px; align-items: center;
+  }
+  .add-item-row input {
+    flex: 1; padding: 8px 12px; font-size: 13px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    outline: none; font-family: var(--font-body); transition: all 0.2s;
+  }
+  .add-item-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .add-item-row select {
+    padding: 8px 10px; font-size: 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-family: var(--font-body); outline: none; max-width: 180px;
+  }
+  .add-item-row select:focus { border-color: var(--accent); }
+  .add-item-row button {
+    padding: 8px 14px; font-size: 12px; border-radius: 8px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; font-weight: 700;
+    font-family: var(--font-body); white-space: nowrap; transition: background 0.15s;
+  }
+  .add-item-row button:hover { background: var(--accent-hover); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-muted);
+    font-size: 13px; font-style: italic;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center; backdrop-filter: blur(6px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 28px; width: 460px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.1); animation: slideIn 0.25s ease;
+  }
+  .modal h2 {
+    font-family: var(--font-display); font-size: 18px; font-weight: 800;
+    margin-bottom: 18px; color: var(--text); letter-spacing: -0.3px;
+  }
+  .modal .form-group { margin-bottom: 14px; }
+  .modal label {
+    display: block; font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 5px; font-weight: 700;
+  }
+  .modal input, .modal select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 12px; border-radius: 8px; font-size: 13px; font-family: var(--font-body); outline: none;
+    transition: all 0.2s;
+  }
+  .modal input:focus, .modal select:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff !important; }
+    body::before { display: none; }
+    .header-right, .add-item-row, .check-actions { display: none !important; }
+    .header { position: static; background: #fff; backdrop-filter: none; border-bottom: 2px solid #000; }
+    .analyst-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+    @page { margin: 0.5in; }
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">CL</div>
+    <h1>Analyst Checklists<span>Weekly Items</span></h1>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-dark-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle dark mode">&#9790;</button>
+    <a href="/critical_path.html" class="btn btn-ghost">&#9664; Tracker</a>
+    <a href="/dashboard.html" class="btn btn-ghost">&#9636; Dashboard</a>
+    <button class="btn btn-reset" onclick="resetAllChecklists()" title="Uncheck all items for new week">&#8634; Reset Week</button>
+    <button class="btn" onclick="openAddAnalyst()" title="Add a new analyst section">+ Analyst</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="summary-bar" id="summaryBar"></div>
+  <div class="analyst-grid" id="analystGrid"></div>
+</div>
+
+<!-- Add Analyst Modal -->
+<div class="modal-overlay" id="addAnalystModal">
+  <div class="modal">
+    <h2>Add Analyst</h2>
+    <div class="form-group">
+      <label>Analyst Name</label>
+      <input type="text" id="newAnalystName" placeholder="e.g. Christa Brenson">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addAnalyst()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TASKS_URL = '/api/tasks';
+const CHECKLIST_URL = '/api/checklists';
+const THEME_KEY = 'nlhs_cp_theme';
+const TOKEN_KEY = 'nlhs_cp_token';
+
+const STATUS_COLORS = {
+  'Not Started':'#ef4444','Scoping':'#06b6d4','Build':'#f59e0b','Dev':'#8b5cf6',
+  'In Progress':'#f97316','Testing':'#3b82f6','Wrap-Up':'#22c55e','Done':'#10b981'
+};
+
+let authToken = localStorage.getItem(TOKEN_KEY) || '';
+let checklistItems = [];
+let cpTasks = [];
+let saveTimer = null;
+
+// ── Theme ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem(THEME_KEY, isDark ? 'light' : 'dark');
+  document.getElementById('themeToggle').innerHTML = isDark ? '&#9790;' : '&#9788;';
+}
+function loadTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeToggle').innerHTML = '&#9788;';
+  }
+}
+
+// ── Utils ──
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function authHeaders() {
+  const h = {'Content-Type':'application/json'};
+  if (authToken) h['X-Auth-Token'] = authToken;
+  return h;
+}
+
+// ── API ──
+async function fetchChecklist() {
+  try {
+    const res = await fetch(CHECKLIST_URL, { headers: authHeaders() });
+    if (res.ok) return await res.json();
+  } catch(e) {}
+  return [];
+}
+async function pushChecklist() {
+  try {
+    await fetch(CHECKLIST_URL, { method: 'POST', headers: authHeaders(), body: JSON.stringify(checklistItems) });
+  } catch(e) {}
+}
+async function fetchTasks() {
+  try {
+    const res = await fetch(TASKS_URL, { headers: authHeaders() });
+    if (res.ok) return await res.json();
+  } catch(e) {}
+  return [];
+}
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => { await pushChecklist(); }, 400);
+}
+
+// ── Init ──
+async function init() {
+  loadTheme();
+  const [cl, tasks] = await Promise.all([fetchChecklist(), fetchTasks()]);
+  checklistItems = cl || [];
+  cpTasks = tasks || [];
+  render();
+}
+
+// ── Get analysts ──
+function getAnalysts() {
+  const fromChecklist = checklistItems.map(i => i.analyst);
+  const fromTasks = cpTasks.map(t => t.analystOwner).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All');
+  return [...new Set([...fromChecklist, ...fromTasks])].sort();
+}
+
+// ── Get linked critical path tasks for an analyst ──
+function getLinkedTasks(analyst) {
+  return cpTasks.filter(t => t.analystOwner === analyst && t.status !== 'Done');
+}
+
+// ── Render ──
+function render() {
+  const analysts = getAnalysts();
+
+  // Summary
+  const totalItems = checklistItems.length;
+  const doneItems = checklistItems.filter(i => i.done).length;
+  const pct = totalItems ? Math.round(doneItems / totalItems * 100) : 0;
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="summary-stat"><div class="sv">${analysts.length}</div><div class="sl">Analysts</div></div>
+    <div class="summary-stat"><div class="sv">${totalItems}</div><div class="sl">Total Items</div></div>
+    <div class="summary-stat"><div class="sv" style="color:var(--green)">${doneItems}</div><div class="sl">Complete</div></div>
+    <div class="summary-stat"><div class="sv" style="color:${pct>=70?'var(--green)':pct>=40?'var(--orange)':'var(--red)'}">${pct}%</div><div class="sl">Progress</div></div>
+  `;
+
+  if (analysts.length === 0) {
+    document.getElementById('analystGrid').innerHTML = '<div class="empty-state">No analysts yet. Click "+ Analyst" to add one, or they\'ll appear automatically from the Tracker.</div>';
+    return;
+  }
+
+  // Build task options for the link dropdown (shared across all cards)
+  const taskOpts = cpTasks.filter(t => t.status !== 'Done')
+    .map(t => `<option value="${esc(t.id)}">${esc(t.task)}</option>`).join('');
+
+  let html = '';
+  analysts.forEach(analyst => {
+    const items = checklistItems.filter(i => i.analyst === analyst);
+    const done = items.filter(i => i.done).length;
+    const linked = getLinkedTasks(analyst);
+
+    html += `<div class="analyst-card">
+      <div class="analyst-header">
+        <div class="analyst-name">${esc(analyst)}</div>
+        <div class="analyst-progress"><span class="done-count">${done}</span> / ${items.length} done</div>
+      </div>`;
+
+    // Linked critical path tasks
+    if (linked.length > 0) {
+      html += `<div class="analyst-linked">Linked Critical Path Items</div>
+        <div class="linked-tasks">`;
+      linked.forEach(t => {
+        const color = STATUS_COLORS[t.status] || '#666';
+        html += `<a class="linked-chip" href="/critical_path.html" title="${esc(t.task)} - ${esc(t.status)}${t.goal ? '\nGoal: ' + t.goal : ''}">
+          <span class="lc-status" style="background:${color}"></span>${esc(t.task)}
+        </a>`;
+      });
+      html += `</div>`;
+    }
+
+    // Checklist items
+    html += `<div class="checklist">`;
+    if (items.length === 0) {
+      html += `<div class="empty-state">No items yet. Add one below.</div>`;
+    }
+    items.forEach(item => {
+      const idx = checklistItems.indexOf(item);
+      const linkedTask = item.linkedTaskId ? cpTasks.find(t => t.id === item.linkedTaskId) : null;
+      html += `<div class="check-item ${item.done ? 'done' : ''}">
+        <input type="checkbox" class="check-box" ${item.done ? 'checked' : ''} onchange="toggleItem(${idx}, this.checked)">
+        <div class="check-body">
+          <div class="check-text">${esc(item.text)}</div>
+          <div class="check-meta">
+            ${linkedTask ? `<a class="check-link" href="/critical_path.html" title="${esc(linkedTask.task)}">${esc(linkedTask.task)}</a>` : ''}
+            ${item.createdDate ? `<span class="check-date">${new Date(item.createdDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
+          </div>
+        </div>
+        <div class="check-actions">
+          <button onclick="deleteItem(${idx})" title="Delete">&#10005;</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    // Add item row
+    html += `<div class="add-item-row">
+      <input type="text" id="addInput-${esc(analyst).replace(/\s/g,'_')}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem('${analyst.replace(/'/g,"\\'")}')">
+      <select id="addLink-${esc(analyst).replace(/\s/g,'_')}">
+        <option value="">Link task...</option>
+        ${taskOpts}
+      </select>
+      <button onclick="addItem('${analyst.replace(/'/g,"\\'")}')">+ Add</button>
+    </div>`;
+
+    html += `</div>`;
+  });
+
+  document.getElementById('analystGrid').innerHTML = html;
+}
+
+// ── Actions ──
+function toggleItem(idx, checked) {
+  checklistItems[idx].done = checked;
+  save();
+  render();
+}
+
+function deleteItem(idx) {
+  if (!confirm('Delete this checklist item?')) return;
+  checklistItems.splice(idx, 1);
+  save();
+  render();
+}
+
+function addItem(analyst) {
+  const safeId = analyst.replace(/\s/g, '_').replace(/'/g, '');
+  const input = document.getElementById('addInput-' + safeId);
+  const linkSel = document.getElementById('addLink-' + safeId);
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+  checklistItems.push({
+    id: crypto.randomUUID(),
+    analyst: analyst,
+    text: text,
+    done: false,
+    linkedTaskId: linkSel ? linkSel.value : '',
+    createdDate: new Date().toISOString()
+  });
+  save();
+  render();
+  // Re-focus the input after render
+  setTimeout(() => {
+    const el = document.getElementById('addInput-' + safeId);
+    if (el) el.focus();
+  }, 50);
+}
+
+function resetAllChecklists() {
+  const doneCount = checklistItems.filter(i => i.done).length;
+  if (doneCount === 0) { alert('Nothing to reset -- no items are checked.'); return; }
+  if (!confirm(`Reset week? This will uncheck ${doneCount} completed item(s).`)) return;
+  checklistItems.forEach(i => i.done = false);
+  save();
+  render();
+}
+
+// ── Add Analyst ──
+function openAddAnalyst() {
+  document.getElementById('newAnalystName').value = '';
+  document.getElementById('addAnalystModal').classList.add('open');
+  setTimeout(() => document.getElementById('newAnalystName').focus(), 50);
+}
+function closeModal() {
+  document.getElementById('addAnalystModal').classList.remove('open');
+}
+function addAnalyst() {
+  const name = document.getElementById('newAnalystName').value.trim();
+  if (!name) { alert('Name is required'); return; }
+  // Add a placeholder item so the analyst shows up
+  checklistItems.push({
+    id: crypto.randomUUID(),
+    analyst: name,
+    text: 'First checklist item',
+    done: false,
+    linkedTaskId: '',
+    createdDate: new Date().toISOString()
+  });
+  save();
+  closeModal();
+  render();
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && e.target.id === 'newAnalystName') addAnalyst();
+});
+
+init();
+</script>
+</body>
+</html>

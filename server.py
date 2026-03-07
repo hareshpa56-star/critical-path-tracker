@@ -17,6 +17,7 @@ PORT = int(os.environ.get('PORT', 8080))
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 APP_PASSWORD = os.environ.get('APP_PASSWORD', '')
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'critical_path_data.json')
+CHECKLIST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'checklist_data.json')
 LOCK = threading.Lock()
 
 # Simple token store: token -> expiry timestamp
@@ -65,6 +66,13 @@ def init_db():
         )
     """)
     cur.execute("INSERT INTO app_data (id, tasks) VALUES (1, '[]') ON CONFLICT (id) DO NOTHING")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS checklist_data (
+            id INTEGER PRIMARY KEY DEFAULT 1,
+            items JSONB NOT NULL DEFAULT '[]'::jsonb
+        )
+    """)
+    cur.execute("INSERT INTO checklist_data (id, items) VALUES (1, '[]') ON CONFLICT (id) DO NOTHING")
     conn.commit()
     cur.close()
     conn.close()
@@ -101,6 +109,37 @@ def save_data(data):
             json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def load_checklist():
+    if DATABASE_URL:
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("SELECT items FROM checklist_data WHERE id = 1")
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        return row[0] if row else []
+    else:
+        if os.path.exists(CHECKLIST_FILE):
+            with open(CHECKLIST_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return []
+
+
+def save_checklist(data):
+    if DATABASE_URL:
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("UPDATE checklist_data SET items = %s WHERE id = 1", [json.dumps(data)])
+        conn.commit()
+        cur.close()
+        conn.close()
+    else:
+        with open(CHECKLIST_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=os.path.dirname(os.path.abspath(__file__)), **kwargs)
@@ -126,6 +165,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self.send_unauthorized()
             with LOCK:
                 data = load_data()
+            self.send_json(200, data)
+        elif self.path == '/api/checklists':
+            if not check_auth(self):
+                return self.send_unauthorized()
+            with LOCK:
+                data = load_checklist()
             self.send_json(200, data)
         else:
             return super().do_GET()
@@ -153,6 +198,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 tasks = json.loads(body)
                 with LOCK:
                     save_data(tasks)
+                self.send_json(200, {"ok": True})
+            except json.JSONDecodeError:
+                self.send_json(400, {"error": "Invalid JSON"})
+
+        elif self.path == '/api/checklists':
+            if not check_auth(self):
+                return self.send_unauthorized()
+            try:
+                items = json.loads(body)
+                with LOCK:
+                    save_checklist(items)
                 self.send_json(200, {"ok": True})
             except json.JSONDecodeError:
                 self.send_json(400, {"error": "Invalid JSON"})

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: nlhs-critical-path
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nlhs-cp-db
+          property: connectionString
+      - key: APP_PASSWORD
+        sync: false
+      - key: PORT
+        value: 10000
+
+databases:
+  - name: nlhs-cp-db
+    plan: starter
+    databaseName: nlhs_critical_path

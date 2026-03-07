@@ -117,6 +117,7 @@
   .animate-in:nth-child(6) { animation-delay: 0.25s; }
   .animate-in:nth-child(7) { animation-delay: 0.3s; }
   .animate-in:nth-child(8) { animation-delay: 0.35s; }
+  .animate-in:nth-child(9) { animation-delay: 0.4s; }
 
   /* Header */
   .header {
@@ -189,6 +190,8 @@
   .btn-danger:hover { background: var(--red); color: #fff; }
   .btn-email { background: var(--green-bg); border-color: transparent; color: var(--green); }
   .btn-email:hover { background: var(--green); color: #fff; }
+  .btn-print { background: var(--cyan-bg); border-color: transparent; color: var(--cyan); }
+  .btn-print:hover { background: var(--cyan); color: #fff; }
   .btn-icon { padding: 8px 10px; }
   .btn-ghost { background: transparent; border-color: transparent; }
   .btn-ghost:hover { background: var(--surface2); }
@@ -203,7 +206,7 @@
     background: var(--surface-glass);
     backdrop-filter: blur(8px);
     border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 16px 20px; flex: 1; min-width: 110px;
+    padding: 16px 20px; flex: 1; min-width: 100px;
     box-shadow: var(--shadow-sm);
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative; overflow: hidden;
@@ -236,7 +239,7 @@
   /* Quick Add */
   .quick-add-bar {
     display: flex; gap: 8px; padding: 8px 32px 6px; align-items: center;
-    position: relative; z-index: 1;
+    position: relative; z-index: 1; flex-wrap: wrap;
   }
   .quick-add-bar input, .quick-add-bar select {
     padding: 8px 12px; border-radius: 8px; font-size: 13px; border: 1px solid var(--border);
@@ -246,30 +249,33 @@
   .quick-add-bar input:focus, .quick-add-bar select:focus {
     border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
   }
-  .quick-add-bar input.qa-task { flex: 2; min-width: 160px; }
-  .quick-add-bar input.qa-desc { flex: 2; min-width: 140px; }
-  .quick-add-bar select { min-width: 110px; }
+  .quick-add-bar input.qa-task { flex: 2; min-width: 140px; }
+  .quick-add-bar input.qa-desc { flex: 2; min-width: 120px; }
+  .quick-add-bar select { min-width: 100px; }
+  .quick-add-bar input[type="date"] { min-width: 130px; }
 
   /* Filters */
   .filters {
-    padding: 8px 32px 16px; display: flex; gap: 18px; flex-wrap: wrap;
+    padding: 8px 32px 16px; display: flex; gap: 10px; flex-wrap: wrap;
     align-items: flex-end; position: relative; z-index: 1;
   }
-  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
   .filter-group .filter-label {
     font-size: 9px; color: var(--text-muted); text-transform: uppercase;
     letter-spacing: 1.2px; font-weight: 700;
   }
-  .filter-pills { display: flex; gap: 4px; flex-wrap: wrap; }
-  .pill {
-    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
-    color: var(--text-muted); transition: all 0.15s;
+  .filter-select {
+    padding: 7px 12px; border-radius: 8px; font-size: 13px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    outline: none; font-family: var(--font-body); cursor: pointer;
+    transition: all 0.2s; min-width: 110px;
   }
-  .pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
-  .pill.active {
-    background: var(--accent); border-color: var(--accent); color: #fff;
-    box-shadow: 0 2px 8px var(--accent-glow);
+  .filter-select:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .filter-select.has-filter {
+    border-color: var(--accent); background: var(--accent-light); color: var(--accent);
+    font-weight: 600;
   }
   .search-wrap { position: relative; }
   .search-wrap svg {
@@ -278,12 +284,12 @@
   }
   .search-input {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 7px 14px 7px 34px; border-radius: 20px; font-size: 13px; width: 220px;
+    padding: 7px 14px 7px 34px; border-radius: 8px; font-size: 13px; width: 200px;
     outline: none; font-family: var(--font-body); transition: all 0.2s;
   }
   .search-input:focus {
     border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
-    width: 260px;
+    width: 240px;
   }
   .search-input:focus + svg, .search-input:focus ~ svg { color: var(--accent); }
 
@@ -293,16 +299,16 @@
     background: var(--surface-glass);
     backdrop-filter: blur(8px);
     border: 1px solid var(--border); border-radius: var(--radius-lg);
-    overflow: hidden; box-shadow: var(--shadow);
+    overflow-x: auto; box-shadow: var(--shadow);
     animation: glowPulse 4s ease-in-out infinite;
   }
-  table { width: 100%; border-collapse: collapse; }
+  table { width: 100%; border-collapse: collapse; min-width: 1200px; }
   thead th {
     padding: 12px 16px; text-align: left; font-size: 10px; text-transform: uppercase;
     letter-spacing: 1px; color: var(--text-muted); font-weight: 700;
     border-bottom: 1px solid var(--border); background: var(--surface2);
     cursor: pointer; user-select: none; white-space: nowrap;
-    position: sticky; top: 64px; z-index: 10;
+    position: sticky; top: 0; z-index: 10;
     font-family: var(--font-body);
     transition: color 0.15s;
   }
@@ -317,12 +323,35 @@
   tbody tr.section-row {
     background: var(--accent-light);
     border-bottom: 2px solid var(--accent);
+    cursor: pointer;
+  }
+  tbody tr.section-row:hover {
+    background: var(--accent-light);
+    filter: brightness(0.97);
   }
   tbody tr.section-row td {
     font-family: var(--font-display);
     font-weight: 700; font-size: 14px; padding: 12px 16px;
     color: var(--accent); letter-spacing: -0.3px;
   }
+  .section-toggle {
+    display: inline-block; width: 20px; text-align: center;
+    font-size: 12px; margin-right: 6px; transition: transform 0.2s;
+    color: var(--accent);
+  }
+  .section-toggle.collapsed { transform: rotate(-90deg); }
+  .section-task-count {
+    font-size: 11px; font-weight: 500; color: var(--text-muted);
+    font-family: var(--font-body); margin-left: 8px;
+  }
+  .section-edit-btn {
+    display: inline-block; margin-left: 8px; opacity: 0;
+    font-size: 13px; color: var(--text-muted); cursor: pointer;
+    transition: opacity 0.15s, color 0.15s;
+    vertical-align: middle;
+  }
+  tbody tr.section-row:hover .section-edit-btn { opacity: 1; }
+  .section-edit-btn:hover { color: var(--accent); }
   tbody td { padding: 10px 16px; font-size: 13px; vertical-align: top; }
   td.task-name {
     font-weight: 700; color: var(--text);
@@ -333,41 +362,50 @@
     font-family: var(--font-body); letter-spacing: 0;
     margin-top: 2px; line-height: 1.3;
   }
-  td.goal { max-width: 380px; line-height: 1.5; color: var(--text-secondary); }
+  td.goal { max-width: 340px; line-height: 1.5; color: var(--text-secondary); }
   td.slg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
   td.slg a { color: var(--accent); text-decoration: none; font-weight: 600; }
   td.slg a:hover { text-decoration: underline; }
 
-  /* Status badges */
-  .status-badge {
-    display: inline-block; padding: 4px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap;
-  }
-  .status-testing { background: var(--blue-bg); color: var(--blue); }
-  .status-build { background: var(--orange-bg); color: var(--orange); }
-  .status-dev { background: var(--purple-bg); color: var(--purple); }
-  .status-scoping { background: var(--cyan-bg); color: var(--cyan); }
-  .status-wrap-up { background: var(--green-bg); color: var(--green); }
-  .status-in-progress { background: var(--orange-bg); color: var(--orange); }
-  .status-not-started { background: var(--red-bg); color: var(--red); }
-  .status-done { background: var(--green-bg); color: var(--green); }
 
-  /* Owner badges */
-  .owner-badge {
-    display: inline-block; padding: 3px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: 600;
+  /* Due date */
+  .due-date { font-size: 12px; white-space: nowrap; }
+  .due-date.overdue { color: var(--red); font-weight: 700; }
+  .due-date.due-soon { color: var(--orange); font-weight: 600; }
+  .due-date.on-track { color: var(--text-secondary); }
+  .overdue-flag {
+    display: inline-block; background: var(--red-bg); color: var(--red);
+    font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
+    margin-left: 4px; text-transform: uppercase; letter-spacing: 0.5px;
   }
-  .owner-epic { background: var(--blue-bg); color: var(--blue); }
-  .owner-customer { background: var(--purple-bg); color: var(--purple); }
 
-  /* Inline dropdowns */
-  .quick-owner, .quick-status {
-    background: transparent; border: none; color: inherit;
-    font-size: 12px; cursor: pointer; outline: none; padding: 0;
-    display: block; width: 100%; margin-bottom: 3px;
-    font-family: var(--font-body);
+  /* Inline styled dropdowns (badge-style selects) */
+  .quick-select {
+    appearance: none; -webkit-appearance: none;
+    border: none; outline: none; cursor: pointer;
+    font-family: var(--font-body); font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; letter-spacing: 0.2px;
+    transition: filter 0.15s, box-shadow 0.15s;
   }
-  .quick-owner option, .quick-status option { background: var(--surface); color: var(--text); }
+  .quick-select:hover { filter: brightness(0.92); }
+  .quick-select:focus { box-shadow: 0 0 0 2px var(--accent-glow); }
+  .quick-select option { background: var(--surface); color: var(--text); font-weight: 500; }
+
+  .select-epic { background: var(--blue-bg); color: var(--blue); }
+  .select-customer { background: var(--purple-bg); color: var(--purple); }
+  .select-status-testing { background: var(--blue-bg); color: var(--blue); }
+  .select-status-build { background: var(--orange-bg); color: var(--orange); }
+  .select-status-dev { background: var(--purple-bg); color: var(--purple); }
+  .select-status-scoping { background: var(--cyan-bg); color: var(--cyan); }
+  .select-status-wrap-up { background: var(--green-bg); color: var(--green); }
+  .select-status-in-progress { background: var(--orange-bg); color: var(--orange); }
+  .select-status-not-started { background: var(--red-bg); color: var(--red); }
+  .select-status-done { background: var(--green-bg); color: var(--green); }
+  .select-priority-high { background: var(--red-bg); color: var(--red); }
+  .select-priority-medium { background: var(--orange-bg); color: var(--orange); }
+  .select-priority-low { background: var(--surface2); color: var(--text-muted); }
+  .select-priority-none { background: transparent; color: var(--text-muted); font-weight: 500; font-size: 11px; }
 
   /* Row actions */
   .row-actions { opacity: 0; transition: opacity 0.15s; white-space: nowrap; display: flex; gap: 2px; }
@@ -386,12 +424,6 @@
     border-radius: 4px;
   }
 
-  /* Last update cell */
-  .update-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; max-width: 200px; }
-  .update-date {
-    font-size: 10px; color: var(--text-muted); margin-top: 3px;
-    font-weight: 600; letter-spacing: 0.3px;
-  }
 
   /* Modal */
   .modal-overlay {
@@ -441,6 +473,7 @@
     transition: transform 0.15s;
   }
   .update-entry:hover { transform: translateX(2px); }
+  .update-entry.auto-entry { border-left-color: var(--text-muted); }
   .update-entry .ue-date { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.3px; }
   .update-entry .ue-text { color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
   .add-update-row { display: flex; gap: 6px; margin-top: 8px; }
@@ -558,9 +591,160 @@
     color: var(--red); font-size: 12px; font-weight: 600;
     margin-top: 10px; display: none;
   }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff !important; }
+    body::before { display: none; }
+    .header, .quick-add-bar, .filters, .row-actions, .quick-owner,
+    .quick-status, .quick-priority, .reviewed-check, .btn,
+    .sync-indicator, .header-right { display: none !important; }
+    .table-wrap { padding: 0 !important; }
+    .table-container {
+      border: 1px solid #ccc !important; border-radius: 0 !important;
+      box-shadow: none !important; animation: none !important;
+      backdrop-filter: none !important;
+    }
+    .stats-bar { padding: 10px 0 !important; }
+    .stat-card {
+      backdrop-filter: none !important;
+      border: 1px solid #ccc !important; box-shadow: none !important;
+      padding: 10px 14px !important;
+    }
+    thead th {
+      position: static !important;
+      background: #f0f0f0 !important; color: #333 !important;
+      font-size: 9px !important;
+    }
+    tbody td { font-size: 11px !important; padding: 6px 10px !important; }
+    tbody tr.section-row td { font-size: 12px !important; padding: 8px 10px !important; }
+    .quick-select {
+      border: 1px solid #ccc !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .due-date.overdue, .overdue-flag {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .print-header {
+      display: block !important;
+      text-align: center; padding: 20px 0 10px;
+      border-bottom: 2px solid #2563eb;
+      margin-bottom: 10px;
+    }
+    .print-header h1 { font-size: 18px; font-family: var(--font-display); }
+    .print-header p { font-size: 11px; color: #666; margin-top: 4px; }
+    @page { margin: 0.5in; size: landscape; }
+  }
+  .print-header { display: none; }
+
+  /* Inline goal editing */
+  .goal-display { cursor: pointer; min-height: 20px; border-radius: 6px; padding: 2px 4px; transition: background 0.15s; }
+  .goal-display:hover { background: var(--accent-light); }
+  .last-week-goal {
+    margin-top: 6px; padding: 5px 8px; border-left: 3px solid var(--orange);
+    background: var(--orange-bg); border-radius: 0 6px 6px 0; font-size: 11px;
+    line-height: 1.4; color: var(--text-secondary); max-width: 340px;
+  }
+  .last-week-goal .lwg-label {
+    font-size: 9px; text-transform: uppercase; color: var(--orange); font-weight: 700;
+    letter-spacing: 0.5px; margin-bottom: 2px;
+  }
+  .goal-edit-input {
+    width: 100%; min-height: 50px; padding: 6px 8px; font-size: 12px; font-family: var(--font-body);
+    border: 1px solid var(--accent); border-radius: 6px; background: var(--surface);
+    color: var(--text); outline: none; resize: vertical; line-height: 1.4;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .goal-hint { font-size: 9px; color: var(--text-muted); margin-top: 3px; font-style: italic; }
+
+  /* Inline update row */
+  .inline-update-row {
+    display: flex; gap: 4px; margin-top: 6px; align-items: center;
+  }
+  .inline-update-row input {
+    flex: 1; padding: 5px 8px; font-size: 11px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    outline: none; font-family: var(--font-body);
+  }
+  .inline-update-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+  .inline-update-row button {
+    padding: 5px 10px; font-size: 11px; border-radius: 6px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; font-weight: 700;
+    font-family: var(--font-body); white-space: nowrap;
+  }
+  .inline-update-row button:hover { background: var(--accent-hover); }
+  .inline-update-row .cancel-inline {
+    background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .inline-update-row .cancel-inline:hover { background: var(--surface2); color: var(--text); }
+
+  /* Reset week button */
+  .btn-reset { background: var(--orange-bg); border-color: transparent; color: var(--orange); }
+  .btn-reset:hover { background: var(--orange); color: #fff; }
+
+  /* History button */
+  .btn-history { background: var(--purple-bg); border-color: transparent; color: var(--purple); }
+  .btn-history:hover { background: var(--purple); color: #fff; }
+
+  /* History modal */
+  .history-week {
+    margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .history-week-header {
+    background: var(--accent-light); padding: 10px 16px; font-family: var(--font-display);
+    font-weight: 700; font-size: 13px; color: var(--accent); letter-spacing: -0.2px;
+    border-bottom: 1px solid var(--border); cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .history-week-header:hover { filter: brightness(0.97); }
+  .history-week-header .week-count {
+    font-size: 11px; font-weight: 500; color: var(--text-muted); font-family: var(--font-body);
+  }
+  .history-task-group {
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .history-task-group:last-child { border-bottom: none; }
+  .history-task-name {
+    font-family: var(--font-display); font-weight: 700; font-size: 13px;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .history-goal-entry {
+    padding: 6px 10px; border-left: 3px solid var(--orange); margin-bottom: 4px;
+    background: var(--orange-bg); border-radius: 0 6px 6px 0; font-size: 12px;
+  }
+  .history-goal-entry .hge-label {
+    font-size: 9px; text-transform: uppercase; color: var(--orange); font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .history-goal-entry .hge-text { color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+  .history-update-entry {
+    padding: 5px 10px; border-left: 3px solid var(--accent); margin-bottom: 3px;
+    background: var(--surface2); border-radius: 0 6px 6px 0; font-size: 11px;
+  }
+  .history-update-entry.auto-log { border-left-color: var(--text-muted); }
+  .history-update-entry .hue-date { font-size: 9px; color: var(--text-muted); font-weight: 600; }
+  .history-update-entry .hue-text { color: var(--text-secondary); margin-top: 1px; }
+  .history-empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; font-style: italic; }
+  .history-filter {
+    display: flex; gap: 8px; margin-bottom: 16px; align-items: center;
+  }
+  .history-filter select {
+    padding: 7px 12px; border-radius: 8px; font-size: 12px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text); font-family: var(--font-body); outline: none;
+  }
+  .history-filter select:focus { border-color: var(--accent); }
 </style>
 </head>
 <body>
+
+<!-- Print Header (only shows in print) -->
+<div class="print-header">
+  <h1>NLHS Critical Path Tracker</h1>
+  <p id="printDate"></p>
+</div>
 
 <!-- Login Screen -->
 <div class="login-overlay" id="loginOverlay" style="display:none">
@@ -585,7 +769,12 @@
       <span id="lastUpdated">Connecting...</span>
     </div>
     <button class="btn btn-dark-toggle" onclick="toggleDarkMode()" id="darkToggle" title="Toggle dark mode">&#9790;</button>
+    <a href="/dashboard.html" class="btn btn-ghost" title="Analytics Dashboard">&#9636; Dashboard</a>
+    <a href="/checklist.html" class="btn btn-ghost" title="Analyst Checklists">&#9745; Checklists</a>
     <button class="btn btn-ghost" onclick="openSettingsModal()" title="Manage Owners">&#9881; Owners</button>
+    <button class="btn btn-history" onclick="openHistoryModal()" title="View weekly history">&#9776; History</button>
+    <button class="btn btn-reset" onclick="resetWeek()" title="Archive goals and reset for new week">&#8634; Reset Week</button>
+    <button class="btn btn-print" onclick="printView()" title="Print meeting view">&#9113; Print</button>
     <button class="btn btn-email" onclick="sendEmail()">&#9993; Email</button>
     <button class="btn btn-primary" onclick="openAddModal()">+ Add Task</button>
     <button class="btn btn-icon btn-ghost" onclick="exportData()" title="Export JSON">&#8681;</button>
@@ -602,27 +791,37 @@
   <select id="qaSection"><option value="">Section...</option></select>
   <select id="qaEpic"><option value="">Epic Owner...</option></select>
   <select id="qaCustomer"><option value="">Customer...</option></select>
+  <select id="qaPriority"><option value="">Priority...</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+  <input type="date" id="qaDueDate" title="Due date">
   <button class="btn btn-primary" onclick="quickAdd()" style="padding:8px 18px">+ Quick Add</button>
 </div>
 
 <div class="filters">
   <div class="filter-group">
     <div class="filter-label">Epic Owner</div>
-    <div class="filter-pills" id="ownerFilters"></div>
+    <select class="filter-select" id="ownerFilter" onchange="setOwnerFilter(this.value)"></select>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Customer</div>
+    <select class="filter-select" id="customerFilter" onchange="setCustomerFilter(this.value)"></select>
   </div>
   <div class="filter-group">
     <div class="filter-label">Status</div>
-    <div class="filter-pills" id="statusFilters"></div>
+    <select class="filter-select" id="statusFilter" onchange="setStatusFilter(this.value)"></select>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Priority</div>
+    <select class="filter-select" id="priorityFilter" onchange="setPriorityFilter(this.value)"></select>
   </div>
   <div class="filter-group">
     <div class="filter-label">Review</div>
-    <div class="filter-pills" id="reviewFilters"></div>
+    <select class="filter-select" id="reviewFilter" onchange="setReviewFilter(this.value)"></select>
   </div>
   <div class="filter-group">
     <div class="filter-label">Search</div>
     <div class="search-wrap">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" class="search-input" id="searchInput" placeholder="Search tasks..." oninput="renderTable()">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search tasks..." oninput="debouncedSearch()">
     </div>
   </div>
 </div>
@@ -634,11 +833,12 @@
         <tr>
           <th style="width:36px">&#10003;</th>
           <th onclick="sortBy('task')">Task <span class="sort-arrow" id="sort-task"></span></th>
+          <th onclick="sortBy('priority')">Priority <span class="sort-arrow" id="sort-priority"></span></th>
+          <th onclick="sortBy('dueDate')">Due Date <span class="sort-arrow" id="sort-dueDate"></span></th>
           <th onclick="sortBy('slg')">Ref SLG <span class="sort-arrow" id="sort-slg"></span></th>
           <th onclick="sortBy('epicOwner')">Epic Owner <span class="sort-arrow" id="sort-epicOwner"></span></th>
           <th onclick="sortBy('analystOwner')">Customer <span class="sort-arrow" id="sort-analystOwner"></span></th>
           <th onclick="sortBy('status')">Status <span class="sort-arrow" id="sort-status"></span></th>
-          <th onclick="sortBy('lastUpdate')">Last Update <span class="sort-arrow" id="sort-lastUpdate"></span></th>
           <th onclick="sortBy('goal')">End of Week Goal <span class="sort-arrow" id="sort-goal"></span></th>
           <th style="width:60px"></th>
         </tr>
@@ -664,7 +864,7 @@
       </div>
       <div class="form-group" style="flex:1">
         <label>Reference SLG</label>
-        <input type="text" id="fSlg" placeholder="e.g. SLG 123456">
+        <input type="text" id="fSlg" placeholder="e.g. 10961127 or full Sherlock URL">
       </div>
     </div>
     <div class="form-group">
@@ -681,18 +881,33 @@
         <select id="fAnalystOwner"><option value="">-- Select --</option></select>
       </div>
     </div>
-    <div class="form-group">
-      <label>Status</label>
-      <select id="fStatus">
-        <option value="Not Started">Not Started</option>
-        <option value="Scoping">Scoping</option>
-        <option value="Build">Build</option>
-        <option value="Dev">Dev</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Testing">Testing</option>
-        <option value="Wrap-Up">Wrap-Up</option>
-        <option value="Done">Done</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="Not Started">Not Started</option>
+          <option value="Scoping">Scoping</option>
+          <option value="Build">Build</option>
+          <option value="Dev">Dev</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Testing">Testing</option>
+          <option value="Wrap-Up">Wrap-Up</option>
+          <option value="Done">Done</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="fPriority">
+          <option value="">-- None --</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="fDueDate">
+      </div>
     </div>
     <div class="form-group">
       <label>End of Week Goal</label>
@@ -727,8 +942,8 @@
   <div class="modal" style="width:480px">
     <h2>Manage Owners</h2>
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('epic')">Epic Owners</div>
-      <div class="tab" onclick="switchTab('customer')">Customer Owners</div>
+      <div class="tab active" onclick="switchTab('epic', this)">Epic Owners</div>
+      <div class="tab" onclick="switchTab('customer', this)">Customer Owners</div>
     </div>
     <div class="tab-content active" id="tab-epic">
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Epic staff who own critical path items.</p>
@@ -748,6 +963,23 @@
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('settingsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal" style="width:700px">
+    <h2>Weekly History</h2>
+    <div class="history-filter">
+      <select id="historyTaskFilter" onchange="renderHistory()">
+        <option value="">All Tasks</option>
+      </select>
+      <span style="font-size:11px;color:var(--text-muted)">Showing archived goals and updates grouped by week</span>
+    </div>
+    <div id="historyContent"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('historyModal')">Close</button>
     </div>
   </div>
 </div>
@@ -793,16 +1025,38 @@ let editingIdx = null;
 let sortCol = null;
 let sortDir = 1;
 let activeOwnerFilter = 'All';
+let activeCustomerFilter = 'All';
 let activeStatusFilter = 'All';
+let activePriorityFilter = 'All';
 let activeReviewFilter = 'All';
+let collapsedSections = {};
 
 const STATUS_ORDER = ['Not Started', 'Scoping', 'Build', 'Dev', 'In Progress', 'Testing', 'Wrap-Up', 'Done'];
+const PRIORITY_ORDER = ['High', 'Medium', 'Low', ''];
 const API_URL = '/api/tasks';
 const OWNERS_KEY = 'nlhs_cp_owners';
 const THEME_KEY = 'nlhs_cp_theme';
 const TOKEN_KEY = 'nlhs_cp_token';
+const COLLAPSED_KEY = 'nlhs_cp_collapsed';
 
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
+let saveTimer = null;
+let searchTimer = null;
+
+function normalizeTask(t) {
+  if (!t.id) t.id = crypto.randomUUID();
+  if (!t.updates) t.updates = [];
+  if (t.reviewed === undefined) t.reviewed = false;
+  if (!t.slg) t.slg = '';
+  if (!t.priority) t.priority = '';
+  if (!t.dueDate) t.dueDate = '';
+  return t;
+}
+
+function debouncedSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(renderTable, 150);
+}
 
 // ── Dark Mode ──
 function toggleDarkMode() {
@@ -881,7 +1135,6 @@ async function checkAuth() {
     const res = await fetch('/api/auth-required');
     const data = await res.json();
     if (data.required) {
-      // Try existing token
       const testRes = await fetch(API_URL, { headers: authHeaders() });
       if (testRes.status === 401) { showLogin(); return false; }
     }
@@ -891,6 +1144,7 @@ async function checkAuth() {
 
 async function init() {
   loadTheme();
+  loadCollapsed();
   const authed = await checkAuth();
   if (!authed) return;
 
@@ -901,15 +1155,10 @@ async function init() {
   if (serverData && serverData.length > 0) {
     tasks = serverData;
   } else {
-    tasks = INITIAL_DATA.map(t => ({...t, id: crypto.randomUUID(), slg: '', updates: [], reviewed: false}));
+    tasks = INITIAL_DATA.map(t => normalizeTask({...t}));
     await pushTasks();
   }
-  tasks.forEach(t => {
-    if (!t.id) t.id = crypto.randomUUID();
-    if (!t.updates) t.updates = [];
-    if (t.reviewed === undefined) t.reviewed = false;
-    if (!t.slg) t.slg = '';
-  });
+  tasks.forEach(normalizeTask);
 
   syncOwnersFromTasks();
   buildFilters();
@@ -935,44 +1184,71 @@ function syncOwnersFromTasks() {
 
 function saveOwners() { localStorage.setItem(OWNERS_KEY, JSON.stringify(owners)); }
 
+// ── Section Collapse ──
+function loadCollapsed() {
+  const saved = localStorage.getItem(COLLAPSED_KEY);
+  if (saved) { try { collapsedSections = JSON.parse(saved); } catch(e) {} }
+}
+function saveCollapsed() { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsedSections)); }
+function toggleSection(section) {
+  collapsedSections[section] = !collapsedSections[section];
+  saveCollapsed();
+  renderTable();
+}
+function renameSection(oldName) {
+  const newName = prompt('Rename section:', oldName);
+  if (newName === null || newName.trim() === '' || newName.trim() === oldName) return;
+  const trimmed = newName.trim();
+  tasks.forEach(t => { if (t.section === oldName) t.section = trimmed; });
+  if (collapsedSections[oldName] !== undefined) {
+    collapsedSections[trimmed] = collapsedSections[oldName];
+    delete collapsedSections[oldName];
+    saveCollapsed();
+  }
+  save(); buildFilters(); populateQuickAdd(); renderTable();
+}
+
 async function autoRefresh() {
   const serverData = await fetchTasks();
   if (serverData && serverData.length > 0) {
     tasks = serverData;
-    tasks.forEach(t => {
-      if (!t.id) t.id = crypto.randomUUID();
-      if (!t.updates) t.updates = [];
-      if (t.reviewed === undefined) t.reviewed = false;
-      if (!t.slg) t.slg = '';
-    });
+    tasks.forEach(normalizeTask);
     buildFilters();
     renderTable();
     document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
   }
 }
 
-async function save() {
-  await pushTasks();
-  document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+function save() {
+  document.getElementById('lastUpdated').textContent = 'Saving...';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    await pushTasks();
+    document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+  }, 400);
 }
 
 // ── Filters ──
+function buildFilterSelect(el, options, activeVal) {
+  el.innerHTML = options.map(o => `<option value="${esc(o)}" ${o === activeVal ? 'selected' : ''}>${esc(o)}</option>`).join('');
+  el.classList.toggle('has-filter', activeVal !== 'All');
+}
+
 function buildFilters() {
   const epicNames = ['All', ...new Set(tasks.map(t => t.epicOwner.split('/')[0].split('(')[0].trim()).filter(Boolean))];
-  document.getElementById('ownerFilters').innerHTML = epicNames.map(o =>
-    `<div class="pill ${o === activeOwnerFilter ? 'active' : ''}" onclick="setOwnerFilter('${o.replace(/'/g,"\\'")}')">${esc(o)}</div>`
-  ).join('');
+  buildFilterSelect(document.getElementById('ownerFilter'), epicNames, activeOwnerFilter);
 
-  document.getElementById('statusFilters').innerHTML = ['All', ...STATUS_ORDER].map(s =>
-    `<div class="pill ${s === activeStatusFilter ? 'active' : ''}" onclick="setStatusFilter('${s}')">${s}</div>`
-  ).join('');
+  const customerNames = ['All', ...new Set(tasks.map(t => t.analystOwner).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All'))];
+  buildFilterSelect(document.getElementById('customerFilter'), customerNames, activeCustomerFilter);
 
-  document.getElementById('reviewFilters').innerHTML = ['All', 'Reviewed', 'Unreviewed'].map(r =>
-    `<div class="pill ${r === activeReviewFilter ? 'active' : ''}" onclick="setReviewFilter('${r}')">${r}</div>`
-  ).join('');
+  buildFilterSelect(document.getElementById('statusFilter'), ['All', ...STATUS_ORDER], activeStatusFilter);
+  buildFilterSelect(document.getElementById('priorityFilter'), ['All', 'High', 'Medium', 'Low', 'None'], activePriorityFilter);
+  buildFilterSelect(document.getElementById('reviewFilter'), ['All', 'Reviewed', 'Unreviewed'], activeReviewFilter);
 }
 function setOwnerFilter(o) { activeOwnerFilter = o; buildFilters(); renderTable(); }
+function setCustomerFilter(o) { activeCustomerFilter = o; buildFilters(); renderTable(); }
 function setStatusFilter(s) { activeStatusFilter = s; buildFilters(); renderTable(); }
+function setPriorityFilter(p) { activePriorityFilter = p; buildFilters(); renderTable(); }
 function setReviewFilter(r) { activeReviewFilter = r; buildFilters(); renderTable(); }
 
 // ── Quick Add ──
@@ -995,6 +1271,8 @@ function quickAdd() {
     epicOwner: document.getElementById('qaEpic').value,
     analystOwner: document.getElementById('qaCustomer').value || 'TBD',
     status: 'Not Started',
+    priority: document.getElementById('qaPriority').value || '',
+    dueDate: document.getElementById('qaDueDate').value || '',
     goal: '',
     updates: [],
     reviewed: false
@@ -1002,6 +1280,8 @@ function quickAdd() {
   save();
   document.getElementById('qaTask').value = '';
   document.getElementById('qaDesc').value = '';
+  document.getElementById('qaPriority').value = '';
+  document.getElementById('qaDueDate').value = '';
   buildFilters();
   populateQuickAdd();
   renderTable();
@@ -1016,6 +1296,8 @@ function renderStats() {
   const active = tasks.filter(t => ['In Progress','Build','Dev','Scoping'].includes(t.status)).length;
   const wrapUp = tasks.filter(t => t.status === 'Wrap-Up').length;
   const reviewed = tasks.filter(t => t.reviewed).length;
+  const overdue = tasks.filter(t => isOverdue(t)).length;
+  const highPriority = tasks.filter(t => t.priority === 'High').length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const pctColor = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--orange)' : 'var(--red)';
 
@@ -1026,6 +1308,8 @@ function renderStats() {
     <div class="stat-card animate-in"><div class="stat-value" style="color:var(--orange)">${active}</div><div class="stat-label">Active</div></div>
     <div class="stat-card animate-in"><div class="stat-value" style="color:var(--cyan)">${wrapUp}</div><div class="stat-label">Wrap-Up</div></div>
     <div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${notStarted}</div><div class="stat-label">Not Started</div></div>
+    ${overdue > 0 ? `<div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${overdue}</div><div class="stat-label">Overdue</div></div>` : ''}
+    ${highPriority > 0 ? `<div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${highPriority}</div><div class="stat-label">High Priority</div></div>` : ''}
     <div class="stat-card animate-in"><div class="stat-value" style="color:var(--accent)">${reviewed}<span style="font-size:16px;opacity:0.5">/${total}</span></div><div class="stat-label">Reviewed</div></div>
     <div class="stat-card animate-in">
       <div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Complete</div>
@@ -1035,11 +1319,40 @@ function renderStats() {
 
 // ── Helpers ──
 function statusClass(s) { return 'status-' + s.toLowerCase().replace(/\s+/g, '-'); }
+function normalizeSlg(val) {
+  if (!val) return '';
+  const urlMatch = val.match(/[?&]id=(\d+)/);
+  if (urlMatch) return urlMatch[1];
+  return val;
+}
+function fmtSlg(val) {
+  if (!val) return '';
+  const id = normalizeSlg(val);
+  if (/^\d+$/.test(id)) return `<a href="https://sherlock.epic.com/default.aspx?view=slg/home&id=${id}" target="_blank" title="Open SLG ${id} in Sherlock">${id}</a>`;
+  return esc(val);
+}
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function fmtDate(d) {
   if (!d) return '';
   const dt = new Date(d);
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+function fmtDueDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function isOverdue(t) {
+  if (!t.dueDate || t.status === 'Done') return false;
+  const due = new Date(t.dueDate + 'T23:59:59');
+  return new Date() > due;
+}
+function isDueSoon(t) {
+  if (!t.dueDate || t.status === 'Done') return false;
+  const due = new Date(t.dueDate + 'T23:59:59');
+  const now = new Date();
+  const diffDays = (due - now) / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= 3;
 }
 
 // ── Sorting ──
@@ -1048,30 +1361,55 @@ function sortBy(col) {
   renderTable();
 }
 
+// ── Auto-log status change ──
+function autoLogStatusChange(idx, oldStatus, newStatus) {
+  if (oldStatus === newStatus) return;
+  if (!tasks[idx].updates) tasks[idx].updates = [];
+  tasks[idx].updates.push({
+    text: `Status changed: ${oldStatus} \u2192 ${newStatus}`,
+    date: new Date().toISOString(),
+    auto: true
+  });
+}
+
 // ── Render Table ──
 function renderTable() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtered = tasks.filter(t => {
     if (activeOwnerFilter !== 'All' && !t.epicOwner.includes(activeOwnerFilter)) return false;
+    if (activeCustomerFilter !== 'All' && t.analystOwner !== activeCustomerFilter) return false;
     if (activeStatusFilter !== 'All' && t.status !== activeStatusFilter) return false;
+    if (activePriorityFilter !== 'All') {
+      if (activePriorityFilter === 'None' && t.priority) return false;
+      if (activePriorityFilter !== 'None' && t.priority !== activePriorityFilter) return false;
+    }
     if (activeReviewFilter === 'Reviewed' && !t.reviewed) return false;
     if (activeReviewFilter === 'Unreviewed' && t.reviewed) return false;
     if (search) {
-      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'')).toLowerCase();
+      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'') + (t.priority||'')).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
   });
 
-  if (sortCol) {
+  // Group by section when not using a column sort
+  if (!sortCol) {
+    const sectionOrder = [];
+    tasks.forEach(t => { if (t.section && !sectionOrder.includes(t.section)) sectionOrder.push(t.section); });
+    filtered.sort((a, b) => {
+      const ai = sectionOrder.indexOf(a.section);
+      const bi = sectionOrder.indexOf(b.section);
+      return ai - bi;
+    });
+  } else {
     filtered.sort((a, b) => {
       let va, vb;
       if (sortCol === 'status') {
         va = STATUS_ORDER.indexOf(a.status); vb = STATUS_ORDER.indexOf(b.status); return (va - vb) * sortDir;
-      } else if (sortCol === 'lastUpdate') {
-        va = a.updates && a.updates.length ? new Date(a.updates[a.updates.length-1].date).getTime() : 0;
-        vb = b.updates && b.updates.length ? new Date(b.updates[b.updates.length-1].date).getTime() : 0;
-        return (va - vb) * sortDir;
+      } else if (sortCol === 'priority') {
+        va = PRIORITY_ORDER.indexOf(a.priority || ''); vb = PRIORITY_ORDER.indexOf(b.priority || ''); return (va - vb) * sortDir;
+      } else if (sortCol === 'dueDate') {
+        va = a.dueDate || '9999'; vb = b.dueDate || '9999'; return va.localeCompare(vb) * sortDir;
       } else {
         va = a[sortCol] || ''; vb = b[sortCol] || '';
         return String(va).localeCompare(String(vb)) * sortDir;
@@ -1082,6 +1420,13 @@ function renderTable() {
   document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
   if (sortCol) { const a = document.getElementById('sort-' + sortCol); if (a) a.textContent = sortDir === 1 ? '\u25B2' : '\u25BC'; }
 
+  // Count tasks per section for collapse header
+  const sectionCounts = {};
+  filtered.forEach(t => {
+    if (!sectionCounts[t.section]) sectionCounts[t.section] = 0;
+    sectionCounts[t.section]++;
+  });
+
   const tbody = document.getElementById('taskTable');
   let html = '';
   let lastSection = '';
@@ -1090,46 +1435,78 @@ function renderTable() {
     const realIdx = tasks.indexOf(t);
     if (t.section !== lastSection && !sortCol) {
       lastSection = t.section;
-      html += `<tr class="section-row"><td colspan="9">${esc(t.section)}</td></tr>`;
+      const isCollapsed = collapsedSections[t.section];
+      const count = sectionCounts[t.section] || 0;
+      html += `<tr class="section-row" onclick="toggleSection('${t.section.replace(/'/g,"\\'")}')">
+        <td colspan="10">
+          <span class="section-toggle ${isCollapsed ? 'collapsed' : ''}">\u25BC</span>${esc(t.section)}
+          <span class="section-task-count">(${count} task${count !== 1 ? 's' : ''})</span>
+          <span class="section-edit-btn" onclick="event.stopPropagation(); renameSection('${t.section.replace(/'/g,"\\'")}')" title="Rename section">&#9998;</span>
+        </td>
+      </tr>`;
     }
 
-    const lastUp = t.updates && t.updates.length ? t.updates[t.updates.length - 1] : null;
+    // Skip rendering task rows if section is collapsed (only when not sorting)
+    if (!sortCol && collapsedSections[t.section]) return;
+
+    const overdueTask = isOverdue(t);
+    const dueSoonTask = isDueSoon(t);
+    const dueDateClass = overdueTask ? 'overdue' : dueSoonTask ? 'due-soon' : 'on-track';
 
     html += `<tr ondblclick="openEditModal(${realIdx})">
       <td style="text-align:center">
         <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed">
       </td>
       <td class="task-name">${esc(t.task)}<div class="task-desc">${esc(t.description)}</div></td>
-      <td class="slg">${t.slg ? esc(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
       <td>
-        <select class="quick-owner" onchange="quickEpicOwner(${realIdx}, this.value)" title="Change Epic Owner">
+        <select class="quick-select select-priority-${t.priority ? t.priority.toLowerCase() : 'none'}" onchange="quickPriority(${realIdx}, this.value)" title="Change Priority">
+          <option value="" ${!t.priority ? 'selected' : ''}>--</option>
+          <option value="High" ${'High' === t.priority ? 'selected' : ''}>High</option>
+          <option value="Medium" ${'Medium' === t.priority ? 'selected' : ''}>Medium</option>
+          <option value="Low" ${'Low' === t.priority ? 'selected' : ''}>Low</option>
+        </select>
+      </td>
+      <td>
+        <div class="due-date ${dueDateClass}">
+          ${t.dueDate ? fmtDueDate(t.dueDate) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}
+          ${overdueTask ? '<span class="overdue-flag">Overdue</span>' : ''}
+        </div>
+      </td>
+      <td class="slg">${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
+      <td>
+        <select class="quick-select select-epic" onchange="quickEpicOwner(${realIdx}, this.value)" title="Change Epic Owner">
           ${owners.epic.map(o => `<option value="${esc(o)}" ${t.epicOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
           ${!owners.epic.includes(t.epicOwner) && t.epicOwner ? `<option value="${esc(t.epicOwner)}" selected>${esc(t.epicOwner)}</option>` : ''}
         </select>
-        <span class="owner-badge owner-epic">${esc(t.epicOwner)}</span>
       </td>
       <td>
-        <select class="quick-owner" onchange="quickCustomerOwner(${realIdx}, this.value)" title="Change Customer Owner">
+        <select class="quick-select select-customer" onchange="quickCustomerOwner(${realIdx}, this.value)" title="Change Customer Owner">
           <option value="TBD" ${t.analystOwner === 'TBD' ? 'selected' : ''}>TBD</option>
           <option value="N/A" ${t.analystOwner === 'N/A' ? 'selected' : ''}>N/A</option>
           <option value="All" ${t.analystOwner === 'All' ? 'selected' : ''}>All</option>
           ${owners.customer.map(o => `<option value="${esc(o)}" ${t.analystOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
           ${!owners.customer.includes(t.analystOwner) && !['TBD','N/A','All'].includes(t.analystOwner) && t.analystOwner ? `<option value="${esc(t.analystOwner)}" selected>${esc(t.analystOwner)}</option>` : ''}
         </select>
-        <span class="owner-badge owner-customer">${esc(t.analystOwner)}</span>
       </td>
       <td>
-        <select class="quick-status" onchange="quickStatus(${realIdx}, this.value)">
+        <select class="quick-select select-${statusClass(t.status)}" onchange="quickStatus(${realIdx}, this.value)">
           ${STATUS_ORDER.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
         </select>
-        <span class="status-badge ${statusClass(t.status)}">${esc(t.status)}</span>
       </td>
-      <td>
-        ${lastUp ? `<div class="update-text">${esc(lastUp.text)}</div><div class="update-date">${fmtDate(lastUp.date)}</div>` : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">No updates</span>'}
+      <td class="goal">
+        <div class="goal-display" onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal">${esc(t.goal) || '<span style="color:var(--text-muted);font-size:11px;font-style:italic">Click to set goal...</span>'}</div>
+        ${(() => { const lg = getLastArchivedGoal(t); return lg ? `<div class="last-week-goal"><div class="lwg-label">Last Week (${esc(lg.week)})</div>${esc(lg.text)}</div>` : ''; })()}
+        <div id="inlineUpdate-${realIdx}" style="display:none">
+          <div class="inline-update-row">
+            <input type="text" id="inlineUpdateInput-${realIdx}" placeholder="Quick update..." onkeydown="if(event.key==='Enter')submitInlineUpdate(${realIdx});if(event.key==='Escape')hideInlineUpdate(${realIdx})">
+            <button onclick="submitInlineUpdate(${realIdx})">Save</button>
+            <button class="cancel-inline" onclick="hideInlineUpdate(${realIdx})">X</button>
+          </div>
+        </div>
       </td>
-      <td class="goal">${esc(t.goal)}</td>
       <td>
         <div class="row-actions">
+          <button onclick="showInlineUpdate(${realIdx}, event)" title="Quick update">+</button>
           <button onclick="openEditModal(${realIdx})" title="Edit">&#9998;</button>
           <button class="del-btn" onclick="quickDelete(${realIdx})" title="Delete">&#10005;</button>
         </div>
@@ -1141,7 +1518,13 @@ function renderTable() {
   renderStats();
 }
 
-function quickStatus(idx, val) { tasks[idx].status = val; save(); renderTable(); }
+function quickStatus(idx, val) {
+  const oldStatus = tasks[idx].status;
+  tasks[idx].status = val;
+  autoLogStatusChange(idx, oldStatus, val);
+  save(); renderTable();
+}
+function quickPriority(idx, val) { tasks[idx].priority = val; save(); renderTable(); }
 function quickEpicOwner(idx, val) { tasks[idx].epicOwner = val; save(); renderTable(); }
 function quickCustomerOwner(idx, val) { tasks[idx].analystOwner = val; save(); renderTable(); }
 function toggleReviewed(idx, val) { tasks[idx].reviewed = val; save(); renderTable(); }
@@ -1171,8 +1554,8 @@ function renderUpdatesLog(updates) {
     return;
   }
   container.innerHTML = [...updates].reverse().map(u =>
-    `<div class="update-entry">
-      <div class="ue-date">${fmtDate(u.date)}</div>
+    `<div class="update-entry ${u.auto ? 'auto-entry' : ''}">
+      <div class="ue-date">${fmtDate(u.date)}${u.auto ? ' <span style="opacity:0.6">(auto)</span>' : ''}</div>
       <div class="ue-text">${esc(u.text)}</div>
     </div>`
   ).join('');
@@ -1204,6 +1587,8 @@ function openAddModal() {
   document.getElementById('fEpicOwner').value = '';
   document.getElementById('fAnalystOwner').value = '';
   document.getElementById('fStatus').value = 'Not Started';
+  document.getElementById('fPriority').value = '';
+  document.getElementById('fDueDate').value = '';
   document.getElementById('fGoal').value = '';
   document.getElementById('fReviewed').checked = false;
   document.getElementById('fNewUpdate').value = '';
@@ -1225,6 +1610,8 @@ function openEditModal(idx) {
   document.getElementById('fEpicOwner').value = t.epicOwner || '';
   document.getElementById('fAnalystOwner').value = t.analystOwner || '';
   document.getElementById('fStatus').value = t.status || 'Not Started';
+  document.getElementById('fPriority').value = t.priority || '';
+  document.getElementById('fDueDate').value = t.dueDate || '';
   document.getElementById('fGoal').value = t.goal || '';
   document.getElementById('fReviewed').checked = t.reviewed || false;
   document.getElementById('fNewUpdate').value = '';
@@ -1240,14 +1627,30 @@ function saveTask() {
   const section = sectionCustom || sectionSelect;
   const existingUpdates = editingIdx !== null ? (tasks[editingIdx].updates || []) : [];
 
+  const newStatus = document.getElementById('fStatus').value;
+
+  // Auto-log status change if editing
+  if (editingIdx !== null) {
+    const oldStatus = tasks[editingIdx].status;
+    if (oldStatus !== newStatus) {
+      existingUpdates.push({
+        text: `Status changed: ${oldStatus} \u2192 ${newStatus}`,
+        date: new Date().toISOString(),
+        auto: true
+      });
+    }
+  }
+
   const data = {
     id: editingIdx !== null ? tasks[editingIdx].id : crypto.randomUUID(),
     section, task: document.getElementById('fTask').value.trim(),
-    slg: document.getElementById('fSlg').value.trim(),
+    slg: normalizeSlg(document.getElementById('fSlg').value.trim()),
     description: document.getElementById('fDescription').value.trim(),
     epicOwner: document.getElementById('fEpicOwner').value.trim(),
     analystOwner: document.getElementById('fAnalystOwner').value.trim(),
-    status: document.getElementById('fStatus').value,
+    status: newStatus,
+    priority: document.getElementById('fPriority').value,
+    dueDate: document.getElementById('fDueDate').value,
     goal: document.getElementById('fGoal').value.trim(),
     updates: existingUpdates,
     reviewed: document.getElementById('fReviewed').checked
@@ -1269,10 +1672,10 @@ function openSettingsModal() {
   document.getElementById('settingsModal').classList.add('open');
 }
 
-function switchTab(tab) {
+function switchTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  el.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
 }
 
@@ -1307,8 +1710,14 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'newCustomerOwner') addOwner('customer');
   if (e.key === 'Enter' && e.target.id === 'fNewUpdate') addUpdate();
   if (e.key === 'Enter' && e.target.id === 'qaTask') quickAdd();
-  if (e.key === 'Escape') { closeModal('taskModal'); closeModal('settingsModal'); }
+  if (e.key === 'Escape') { closeModal('taskModal'); closeModal('settingsModal'); closeModal('historyModal'); }
 });
+
+// ── Print View ──
+function printView() {
+  document.getElementById('printDate').textContent = 'Printed: ' + new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' at ' + new Date().toLocaleTimeString();
+  window.print();
+}
 
 // ── Email Summary ──
 function sendEmail() {
@@ -1318,6 +1727,8 @@ function sendEmail() {
   const testing = tasks.filter(t => t.status === 'Testing').length;
   const active = tasks.filter(t => ['In Progress','Build','Dev','Scoping'].includes(t.status)).length;
   const notStarted = tasks.filter(t => t.status === 'Not Started').length;
+  const overdue = tasks.filter(t => isOverdue(t)).length;
+  const highPri = tasks.filter(t => t.priority === 'High').length;
   const pct = total ? Math.round((done / total) * 100) : 0;
 
   const statusColors = {
@@ -1328,18 +1739,24 @@ function sendEmail() {
     'Testing': '#eff6ff', 'Build': '#fffbeb', 'Dev': '#f5f3ff', 'Scoping': '#ecfeff',
     'Wrap-Up': '#f0fdf4', 'In Progress': '#fffbeb', 'Not Started': '#fef2f2', 'Done': '#f0fdf4'
   };
+  const prioColors = { 'High': '#dc2626', 'Medium': '#d97706', 'Low': '#a8a29e' };
+  const prioBg = { 'High': '#fef2f2', 'Medium': '#fffbeb', 'Low': '#f5f5f5' };
 
-  let html = `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:900px;margin:0 auto">`;
+  let html = `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:960px;margin:0 auto">`;
   html += `<div style="background:#2563eb;color:#fff;padding:18px 28px;border-radius:10px 10px 0 0">
     <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.3px">NLHS Critical Path Update</h2>
     <p style="margin:5px 0 0;font-size:13px;opacity:0.85">${date}</p>
   </div>`;
 
   html += `<div style="display:flex;background:#f8f8f5;padding:14px 28px;border-bottom:1px solid #e2e0d8;gap:28px;flex-wrap:wrap">`;
-  [{label:'Total',val:total,color:'#1c1917'}, {label:'Done',val:done,color:'#16a34a'},
-   {label:'Testing',val:testing,color:'#2563eb'}, {label:'Active',val:active,color:'#d97706'},
-   {label:'Not Started',val:notStarted,color:'#dc2626'}, {label:'Complete',val:pct+'%',color:pct>=70?'#16a34a':pct>=40?'#d97706':'#dc2626'}
-  ].forEach(s => {
+  const statItems = [
+    {label:'Total',val:total,color:'#1c1917'}, {label:'Done',val:done,color:'#16a34a'},
+    {label:'Testing',val:testing,color:'#2563eb'}, {label:'Active',val:active,color:'#d97706'},
+    {label:'Not Started',val:notStarted,color:'#dc2626'}, {label:'Complete',val:pct+'%',color:pct>=70?'#16a34a':pct>=40?'#d97706':'#dc2626'}
+  ];
+  if (overdue > 0) statItems.push({label:'Overdue',val:overdue,color:'#dc2626'});
+  if (highPri > 0) statItems.push({label:'High Priority',val:highPri,color:'#dc2626'});
+  statItems.forEach(s => {
     html += `<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:${s.color}">${s.val}</div><div style="font-size:10px;color:#a8a29e;text-transform:uppercase;letter-spacing:0.8px;font-weight:600">${s.label}</div></div>`;
   });
   html += `</div>`;
@@ -1349,21 +1766,26 @@ function sendEmail() {
   tasks.forEach(t => {
     if (t.section !== lastSection) {
       lastSection = t.section;
-      html += `<tr><td colspan="6" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:11px 18px;border-bottom:2px solid #2563eb;font-size:13px">${esc(t.section)}</td></tr>`;
+      html += `<tr><td colspan="8" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:11px 18px;border-bottom:2px solid #2563eb;font-size:13px">${esc(t.section)}</td></tr>`;
     }
     const sc = statusColors[t.status] || '#666';
     const sb = statusBg[t.status] || '#f5f5f5';
     const lastUp = t.updates && t.updates.length ? t.updates[t.updates.length - 1] : null;
+    const overdueFlag = isOverdue(t) ? ' <span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:3px">OVERDUE</span>' : '';
+    const prioHtml = t.priority ? `<span style="background:${prioBg[t.priority]||'#f5f5f5'};color:${prioColors[t.priority]||'#666'};padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${esc(t.priority)}</span>` : '';
+
     html += `<tr style="border-bottom:1px solid #e2e0d8">
-      <td style="padding:9px 18px;font-weight:600;width:200px;vertical-align:top">${esc(t.task)}</td>
-      <td style="padding:9px 8px;color:#2563eb;font-size:12px;vertical-align:top;white-space:nowrap">${t.slg ? esc(t.slg) : ''}</td>
-      <td style="padding:9px 8px;vertical-align:top">
+      <td style="padding:9px 18px;font-weight:600;width:180px;vertical-align:top">${esc(t.task)}</td>
+      <td style="padding:9px 6px;vertical-align:top;white-space:nowrap">${prioHtml}</td>
+      <td style="padding:9px 6px;vertical-align:top;font-size:12px;white-space:nowrap">${t.dueDate ? fmtDueDate(t.dueDate) + overdueFlag : ''}</td>
+      <td style="padding:9px 6px;color:#2563eb;font-size:12px;vertical-align:top;white-space:nowrap">${t.slg ? fmtSlg(t.slg) : ''}</td>
+      <td style="padding:9px 6px;vertical-align:top">
         <span style="background:${sb};color:${sc};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(t.status)}</span>
       </td>
-      <td style="padding:9px 8px;color:#57534e;font-size:12px;vertical-align:top">
+      <td style="padding:9px 6px;color:#57534e;font-size:12px;vertical-align:top">
         <span style="color:#2563eb">${esc(t.epicOwner)}</span> / <span style="color:#7c3aed">${esc(t.analystOwner)}</span>
       </td>
-      <td style="padding:9px 8px;color:#57534e;font-size:12px;vertical-align:top;max-width:160px">
+      <td style="padding:9px 6px;color:#57534e;font-size:12px;vertical-align:top;max-width:140px">
         ${lastUp ? esc(lastUp.text) + '<br><span style="font-size:10px;color:#a8a29e">' + fmtDate(lastUp.date) + '</span>' : ''}
       </td>
       <td style="padding:9px 18px;color:#57534e;line-height:1.5;vertical-align:top">${esc(t.goal)}</td>
@@ -1372,7 +1794,7 @@ function sendEmail() {
   html += `</table>`;
   html += `<div style="padding:14px 28px;background:#f8f8f5;border-top:1px solid #e2e0d8;border-radius:0 0 10px 10px;font-size:11px;color:#a8a29e;font-weight:500">Generated from NLHS Critical Path Tracker</div></div>`;
 
-  const win = window.open('', '_blank', 'width=960,height=700');
+  const win = window.open('', '_blank', 'width=1000,height=700');
   win.document.write(`<!DOCTYPE html><html><head><title>Email Preview</title>
     <style>
       body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #f4f2ee; }
@@ -1430,18 +1852,237 @@ function handleImport(e) {
       const data = JSON.parse(ev.target.result);
       if (Array.isArray(data)) {
         tasks = data;
-        tasks.forEach(t => {
-          if (!t.id) t.id = crypto.randomUUID();
-          if (!t.updates) t.updates = [];
-          if (t.reviewed === undefined) t.reviewed = false;
-          if (!t.slg) t.slg = '';
-        });
+        tasks.forEach(normalizeTask);
         save(); buildFilters(); populateQuickAdd(); renderTable();
       }
     } catch(err) { alert('Invalid JSON file'); }
   };
   reader.readAsText(file);
   e.target.value = '';
+}
+
+// ── Last Week Goal Lookup ──
+function getLastArchivedGoal(task) {
+  if (!task.updates || task.updates.length === 0) return null;
+  // Find the most recent goal-archive entry
+  for (let i = task.updates.length - 1; i >= 0; i--) {
+    const u = task.updates[i];
+    if (u.type === 'goal-archive') {
+      // Strip the [Week Goal - ...] prefix
+      const text = u.text.replace(/^\[Week Goal - [^\]]+\] /, '');
+      const weekMatch = u.text.match(/^\[Week Goal - ([^\]]+)\]/);
+      return { text, week: weekMatch ? weekMatch[1] : '', date: u.date };
+    }
+  }
+  return null;
+}
+
+// ── Inline Goal Editing ──
+function inlineEditGoal(idx, el) {
+  const current = tasks[idx].goal || '';
+  const td = el.parentElement;
+  td.innerHTML = `
+    <textarea class="goal-edit-input" id="goalEdit-${idx}" onblur="saveInlineGoal(${idx})">${esc(current)}</textarea>
+    <div class="goal-hint">Press Tab or click away to save. Esc to cancel.</div>
+  `;
+  const textarea = document.getElementById('goalEdit-' + idx);
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { e.preventDefault(); renderTable(); }
+    if (e.key === 'Tab') { e.preventDefault(); saveInlineGoal(idx); }
+  });
+}
+function saveInlineGoal(idx) {
+  const textarea = document.getElementById('goalEdit-' + idx);
+  if (!textarea) return;
+  const newGoal = textarea.value.trim();
+  if (newGoal !== tasks[idx].goal) {
+    tasks[idx].goal = newGoal;
+    save();
+  }
+  renderTable();
+}
+
+// ── Inline Quick Update ──
+function showInlineUpdate(idx, event) {
+  event.stopPropagation();
+  const row = document.getElementById('inlineUpdate-' + idx);
+  if (row) {
+    row.style.display = 'block';
+    const input = document.getElementById('inlineUpdateInput-' + idx);
+    if (input) input.focus();
+  }
+}
+function hideInlineUpdate(idx) {
+  const row = document.getElementById('inlineUpdate-' + idx);
+  if (row) row.style.display = 'none';
+}
+function submitInlineUpdate(idx) {
+  const input = document.getElementById('inlineUpdateInput-' + idx);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  if (!tasks[idx].updates) tasks[idx].updates = [];
+  tasks[idx].updates.push({ text, date: new Date().toISOString() });
+  save();
+  renderTable();
+}
+
+// ── Reset Week ──
+function resetWeek() {
+  const tasksWithGoals = tasks.filter(t => t.goal && t.goal.trim());
+  if (tasksWithGoals.length === 0 && !tasks.some(t => t.reviewed)) {
+    alert('Nothing to reset -- no goals or reviewed items found.');
+    return;
+  }
+  const weekLabel = getWeekLabel(new Date());
+
+  let carryForward = false;
+  if (tasksWithGoals.length > 0) {
+    const choice = prompt(
+      `Reset Week: Archive ${tasksWithGoals.length} goal(s) and uncheck reviewed flags.\n\n` +
+      `Type "carry" to keep goals for next week, or "clear" to start blank.\n` +
+      `Press Cancel to abort.`,
+      'carry'
+    );
+    if (choice === null) return;
+    carryForward = choice.trim().toLowerCase() !== 'clear';
+  } else {
+    if (!confirm('Reset Week?\n\nThis will uncheck all reviewed flags.')) return;
+  }
+
+  tasks.forEach(t => {
+    if (t.goal && t.goal.trim()) {
+      if (!t.updates) t.updates = [];
+      t.updates.push({
+        text: `[Week Goal - ${weekLabel}] ${t.goal.trim()}`,
+        date: new Date().toISOString(),
+        auto: true,
+        type: 'goal-archive'
+      });
+      if (!carryForward) {
+        t.goal = '';
+      }
+      // If carrying forward, goal stays as-is for editing
+    }
+    t.reviewed = false;
+  });
+  save();
+  buildFilters();
+  renderTable();
+}
+
+function getWeekLabel(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  const fri = new Date(mon);
+  fri.setDate(mon.getDate() + 4);
+  const fmt = dt => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return fmt(mon) + ' - ' + fmt(fri);
+}
+
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// ── History Modal ──
+function openHistoryModal() {
+  // Populate task filter
+  const taskFilter = document.getElementById('historyTaskFilter');
+  const taskNames = [...new Set(tasks.map(t => t.task))].sort();
+  taskFilter.innerHTML = '<option value="">All Tasks</option>' +
+    taskNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  renderHistory();
+  document.getElementById('historyModal').classList.add('open');
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyContent');
+  const filterTask = document.getElementById('historyTaskFilter').value;
+
+  // Collect all updates across all tasks, tagged with task name
+  const allEntries = [];
+  tasks.forEach(t => {
+    if (filterTask && t.task !== filterTask) return;
+    (t.updates || []).forEach(u => {
+      allEntries.push({
+        taskName: t.task,
+        taskId: t.id,
+        text: u.text,
+        date: u.date,
+        auto: u.auto || false,
+        type: u.type || (u.auto ? 'auto' : 'manual')
+      });
+    });
+  });
+
+  if (allEntries.length === 0) {
+    container.innerHTML = '<div class="history-empty">No history entries yet. Updates and archived goals will appear here.</div>';
+    return;
+  }
+
+  // Sort by date descending
+  allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Group by week
+  const weeks = {};
+  allEntries.forEach(e => {
+    const weekStart = getWeekStart(new Date(e.date));
+    const key = weekStart.toISOString().slice(0, 10);
+    if (!weeks[key]) weeks[key] = { label: getWeekLabel(new Date(e.date)), entries: [] };
+    weeks[key].entries.push(e);
+  });
+
+  // Render weeks
+  let html = '';
+  const weekKeys = Object.keys(weeks).sort().reverse();
+  weekKeys.forEach(key => {
+    const week = weeks[key];
+    // Group entries within the week by task
+    const byTask = {};
+    week.entries.forEach(e => {
+      if (!byTask[e.taskName]) byTask[e.taskName] = [];
+      byTask[e.taskName].push(e);
+    });
+
+    const totalEntries = week.entries.length;
+    html += `<div class="history-week">
+      <div class="history-week-header">
+        <span>Week of ${esc(week.label)}</span>
+        <span class="week-count">${totalEntries} entr${totalEntries !== 1 ? 'ies' : 'y'}</span>
+      </div>`;
+
+    Object.keys(byTask).sort().forEach(taskName => {
+      const entries = byTask[taskName];
+      html += `<div class="history-task-group">
+        <div class="history-task-name">${esc(taskName)}</div>`;
+      entries.forEach(e => {
+        if (e.type === 'goal-archive') {
+          html += `<div class="history-goal-entry">
+            <div class="hge-label">Archived Goal</div>
+            <div class="hge-text">${esc(e.text.replace(/^\[Week Goal - [^\]]+\] /, ''))}</div>
+            <div style="font-size:9px;color:var(--text-muted);margin-top:2px">${fmtDate(e.date)}</div>
+          </div>`;
+        } else {
+          html += `<div class="history-update-entry ${e.auto ? 'auto-log' : ''}">
+            <div class="hue-date">${fmtDate(e.date)}${e.auto ? ' <span style="opacity:0.6">(auto)</span>' : ''}</div>
+            <div class="hue-text">${esc(e.text)}</div>
+          </div>`;
+        }
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
 }
 
 init();
