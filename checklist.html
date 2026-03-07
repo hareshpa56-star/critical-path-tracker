@@ -349,6 +349,7 @@ let authToken = localStorage.getItem(TOKEN_KEY) || '';
 let checklistItems = [];
 let cpTasks = [];
 let saveTimer = null;
+let APP_PASSWORD_REQUIRED = false;
 
 // ── Theme ──
 function toggleTheme() {
@@ -372,6 +373,21 @@ function authHeaders() {
   const h = {'Content-Type':'application/json'};
   if (authToken) h['X-Auth-Token'] = authToken;
   return h;
+}
+
+async function verifyAdmin(action) {
+  const pw = prompt(`Admin password required to ${action}:`);
+  if (!pw) return false;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.ok) return true;
+    alert('Incorrect password.');
+    return false;
+  } catch(e) { alert('Could not verify password.'); return false; }
 }
 
 // ── API ──
@@ -402,6 +418,11 @@ function save() {
 // ── Init ──
 async function init() {
   loadTheme();
+  try {
+    const authRes = await fetch('/api/auth-required');
+    const authData = await authRes.json();
+    APP_PASSWORD_REQUIRED = authData.required;
+  } catch(e) {}
   const [cl, tasks] = await Promise.all([fetchChecklist(), fetchTasks()]);
   checklistItems = cl || [];
   cpTasks = tasks || [];
@@ -546,7 +567,8 @@ function addItem(analyst) {
   }, 50);
 }
 
-function resetAllChecklists() {
+async function resetAllChecklists() {
+  if (APP_PASSWORD_REQUIRED && !(await verifyAdmin('Reset Week'))) return;
   const doneCount = checklistItems.filter(i => i.done).length;
   if (doneCount === 0) { alert('Nothing to reset -- no items are checked.'); return; }
   if (!confirm(`Reset week? This will uncheck ${doneCount} completed item(s).`)) return;

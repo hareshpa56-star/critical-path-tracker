@@ -1042,6 +1042,7 @@ const COLLAPSED_KEY = 'nlhs_cp_collapsed';
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
 let saveTimer = null;
 let searchTimer = null;
+let APP_PASSWORD_REQUIRED = false;
 
 function normalizeTask(t) {
   if (!t.id) t.id = crypto.randomUUID();
@@ -1134,6 +1135,7 @@ async function checkAuth() {
   try {
     const res = await fetch('/api/auth-required');
     const data = await res.json();
+    APP_PASSWORD_REQUIRED = data.required;
     if (data.required) {
       const testRes = await fetch(API_URL, { headers: authHeaders() });
       if (testRes.status === 401) { showLogin(); return false; }
@@ -1954,7 +1956,23 @@ function submitInlineUpdate(idx) {
 }
 
 // ── Reset Week ──
-function resetWeek() {
+async function verifyAdmin(action) {
+  const pw = prompt(`Admin password required to ${action}:`);
+  if (!pw) return false;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.ok) return true;
+    alert('Incorrect password.');
+    return false;
+  } catch(e) { alert('Could not verify password.'); return false; }
+}
+
+async function resetWeek() {
+  if (APP_PASSWORD_REQUIRED && !(await verifyAdmin('Reset Week'))) return;
   const tasksWithGoals = tasks.filter(t => t.goal && t.goal.trim());
   if (tasksWithGoals.length === 0 && !tasks.some(t => t.reviewed)) {
     alert('Nothing to reset -- no goals or reviewed items found.');
