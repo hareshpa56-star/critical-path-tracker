@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLHS Critical Path Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --bg-mesh: linear-gradient(135deg, #f4f2ee 0%, #e8e4dc 40%, #f0ece4 100%);
+    --surface: #ffffff;
+    --surface2: #f7f5f1;
+    --surface-glass: rgba(255,255,255,0.82);
+    --border: #ddd8ce;
+    --border-hover: #c4bfb3;
+    --text: #1c1917;
+    --text-secondary: #57534e;
+    --text-muted: #a8a29e;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --accent-hover: #1d4ed8;
+    --accent-glow: rgba(37,99,235,0.12);
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --orange: #d97706;
+    --orange-bg: #fffbeb;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --purple: #7c3aed;
+    --purple-bg: #f5f3ff;
+    --cyan: #0891b2;
+    --cyan-bg: #ecfeff;
+    --shadow-sm: 0 1px 2px rgba(28,25,23,0.04);
+    --shadow: 0 2px 8px rgba(28,25,23,0.06), 0 1px 2px rgba(28,25,23,0.04);
+    --shadow-md: 0 8px 24px rgba(28,25,23,0.08), 0 2px 6px rgba(28,25,23,0.04);
+    --shadow-lg: 0 16px 48px rgba(28,25,23,0.1);
+    --radius: 12px;
+    --radius-lg: 16px;
+    --hover-row: rgba(37,99,235,0.03);
+    --font-display: 'Bricolage Grotesque', serif;
+    --font-body: 'Instrument Sans', sans-serif;
+    --grid-color: rgba(28,25,23,0.03);
+  }
+  [data-theme="dark"] {
+    --bg: #0c0c0f;
+    --bg-mesh: linear-gradient(135deg, #0c0c0f 0%, #111118 40%, #0e0e14 100%);
+    --surface: #16161d;
+    --surface2: #1e1e28;
+    --surface-glass: rgba(22,22,29,0.88);
+    --border: #2a2a38;
+    --border-hover: #3d3d50;
+    --text: #ececf1;
+    --text-secondary: #a1a1b5;
+    --text-muted: #5c5c72;
+    --accent: #5b8af5;
+    --accent-light: #151b30;
+    --accent-hover: #7ba3ff;
+    --accent-glow: rgba(91,138,245,0.15);
+    --red: #f87171;
+    --red-bg: #1f1215;
+    --orange: #fbbf24;
+    --orange-bg: #1f1a0e;
+    --green: #4ade80;
+    --green-bg: #0e1f15;
+    --blue: #60a5fa;
+    --blue-bg: #101828;
+    --purple: #a78bfa;
+    --purple-bg: #1a1530;
+    --cyan: #22d3ee;
+    --cyan-bg: #0c1a20;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.2);
+    --shadow-lg: 0 16px 48px rgba(0,0,0,0.4);
+    --hover-row: rgba(91,138,245,0.05);
+    --grid-color: rgba(255,255,255,0.02);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-mesh);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.4s ease, color 0.3s ease;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 8px var(--accent-glow); } 50% { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(37,99,235,0.05); } }
+
+  .animate-in { animation: fadeUp 0.5s ease both; }
+  .animate-in:nth-child(2) { animation-delay: 0.05s; }
+  .animate-in:nth-child(3) { animation-delay: 0.1s; }
+  .animate-in:nth-child(4) { animation-delay: 0.15s; }
+  .animate-in:nth-child(5) { animation-delay: 0.2s; }
+  .animate-in:nth-child(6) { animation-delay: 0.25s; }
+  .animate-in:nth-child(7) { animation-delay: 0.3s; }
+  .animate-in:nth-child(8) { animation-delay: 0.35s; }
+
+  /* Header */
+  .header {
+    background: var(--surface-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; font-family: var(--font-display);
+    letter-spacing: -0.5px;
+    box-shadow: 0 2px 8px var(--accent-glow);
+    transition: transform 0.2s;
+  }
+  .header-logo:hover { transform: scale(1.05) rotate(-2deg); }
+  .header h1 {
+    font-family: var(--font-display);
+    font-size: 20px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .header h1 span {
+    color: var(--text-muted); font-weight: 400; font-size: 13px;
+    margin-left: 8px; letter-spacing: 0; font-family: var(--font-body);
+  }
+  .header-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .sync-indicator {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    background: var(--green-bg); border: 1px solid rgba(22,163,74,0.15);
+    font-size: 11px; color: var(--green); font-weight: 600;
+  }
+  .sync-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); display: inline-block;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-secondary); transition: all 0.2s; display: inline-flex;
+    align-items: center; gap: 6px; font-family: var(--font-body);
+    position: relative; overflow: hidden;
+  }
+  .btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.08));
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .btn:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn:hover::after { opacity: 1; }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); box-shadow: 0 4px 12px var(--accent-glow); }
+  .btn-danger { background: var(--red-bg); border-color: transparent; color: var(--red); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+  .btn-email { background: var(--green-bg); border-color: transparent; color: var(--green); }
+  .btn-email:hover { background: var(--green); color: #fff; }
+  .btn-icon { padding: 8px 10px; }
+  .btn-ghost { background: transparent; border-color: transparent; }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-dark-toggle {
+    font-size: 18px; padding: 6px 10px; background: transparent;
+    border-color: transparent; line-height: 1;
+  }
+
+  /* Stats */
+  .stats-bar { display: flex; gap: 10px; padding: 24px 32px 12px; flex-wrap: wrap; position: relative; z-index: 1; }
+  .stat-card {
+    background: var(--surface-glass);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 20px; flex: 1; min-width: 110px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .stat-card .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px; font-weight: 800; line-height: 1;
+    letter-spacing: -1px;
+  }
+  .stat-card .stat-label {
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.8px; margin-top: 5px; font-weight: 600;
+  }
+  .progress-bar {
+    width: 100%; height: 4px; background: var(--border);
+    border-radius: 2px; margin-top: 8px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: ''; position: absolute; right: 0; top: -1px; bottom: -1px;
+    width: 6px; border-radius: 3px;
+    background: inherit; filter: brightness(1.3);
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  /* Quick Add */
+  .quick-add-bar {
+    display: flex; gap: 8px; padding: 8px 32px 6px; align-items: center;
+    position: relative; z-index: 1;
+  }
+  .quick-add-bar input, .quick-add-bar select {
+    padding: 8px 12px; border-radius: 8px; font-size: 13px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); outline: none;
+    font-family: var(--font-body); transition: all 0.2s;
+  }
+  .quick-add-bar input:focus, .quick-add-bar select:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .quick-add-bar input.qa-task { flex: 2; min-width: 160px; }
+  .quick-add-bar input.qa-desc { flex: 2; min-width: 140px; }
+  .quick-add-bar select { min-width: 110px; }
+
+  /* Filters */
+  .filters {
+    padding: 8px 32px 16px; display: flex; gap: 18px; flex-wrap: wrap;
+    align-items: flex-end; position: relative; z-index: 1;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-group .filter-label {
+    font-size: 9px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1.2px; font-weight: 700;
+  }
+  .filter-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .pill.active {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
+  .search-wrap { position: relative; }
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); transition: color 0.2s;
+  }
+  .search-input {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 14px 7px 34px; border-radius: 20px; font-size: 13px; width: 220px;
+    outline: none; font-family: var(--font-body); transition: all 0.2s;
+  }
+  .search-input:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+    width: 260px;
+  }
+  .search-input:focus + svg, .search-input:focus ~ svg { color: var(--accent); }
+
+  /* Table */
+  .table-wrap { padding: 0 32px 40px; position: relative; z-index: 1; }
+  .table-container {
+    background: var(--surface-glass);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    overflow: hidden; box-shadow: var(--shadow);
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 12px 16px; text-align: left; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted); font-weight: 700;
+    border-bottom: 1px solid var(--border); background: var(--surface2);
+    cursor: pointer; user-select: none; white-space: nowrap;
+    position: sticky; top: 64px; z-index: 10;
+    font-family: var(--font-body);
+    transition: color 0.15s;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th .sort-arrow { margin-left: 4px; font-size: 9px; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s, transform 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--hover-row); }
+  tbody tr.section-row {
+    background: var(--accent-light);
+    border-bottom: 2px solid var(--accent);
+  }
+  tbody tr.section-row td {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 14px; padding: 12px 16px;
+    color: var(--accent); letter-spacing: -0.3px;
+  }
+  tbody td { padding: 10px 16px; font-size: 13px; vertical-align: top; }
+  td.task-name {
+    font-weight: 700; color: var(--text);
+    font-family: var(--font-display); letter-spacing: -0.2px;
+  }
+  td.task-name .task-desc {
+    font-weight: 400; font-size: 11px; color: var(--text-muted);
+    font-family: var(--font-body); letter-spacing: 0;
+    margin-top: 2px; line-height: 1.3;
+  }
+  td.goal { max-width: 380px; line-height: 1.5; color: var(--text-secondary); }
+  td.slg { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  td.slg a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  td.slg a:hover { text-decoration: underline; }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-block; padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap;
+  }
+  .status-testing { background: var(--blue-bg); color: var(--blue); }
+  .status-build { background: var(--orange-bg); color: var(--orange); }
+  .status-dev { background: var(--purple-bg); color: var(--purple); }
+  .status-scoping { background: var(--cyan-bg); color: var(--cyan); }
+  .status-wrap-up { background: var(--green-bg); color: var(--green); }
+  .status-in-progress { background: var(--orange-bg); color: var(--orange); }
+  .status-not-started { background: var(--red-bg); color: var(--red); }
+  .status-done { background: var(--green-bg); color: var(--green); }
+
+  /* Owner badges */
+  .owner-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+  }
+  .owner-epic { background: var(--blue-bg); color: var(--blue); }
+  .owner-customer { background: var(--purple-bg); color: var(--purple); }
+
+  /* Inline dropdowns */
+  .quick-owner, .quick-status {
+    background: transparent; border: none; color: inherit;
+    font-size: 12px; cursor: pointer; outline: none; padding: 0;
+    display: block; width: 100%; margin-bottom: 3px;
+    font-family: var(--font-body);
+  }
+  .quick-owner option, .quick-status option { background: var(--surface); color: var(--text); }
+
+  /* Row actions */
+  .row-actions { opacity: 0; transition: opacity 0.15s; white-space: nowrap; display: flex; gap: 2px; }
+  tbody tr:hover .row-actions { opacity: 1; }
+  .row-actions button {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    padding: 4px 6px; font-size: 14px; border-radius: 6px; transition: all 0.15s;
+  }
+  .row-actions button:hover { color: var(--accent); background: var(--accent-light); }
+  .row-actions button.del-btn:hover { color: var(--red); background: var(--red-bg); }
+
+  /* Reviewed checkbox */
+  .reviewed-check {
+    width: 18px; height: 18px; cursor: pointer;
+    accent-color: var(--accent); margin: 0;
+    border-radius: 4px;
+  }
+
+  /* Last update cell */
+  .update-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; max-width: 200px; }
+  .update-date {
+    font-size: 10px; color: var(--text-muted); margin-top: 3px;
+    font-weight: 600; letter-spacing: 0.3px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 28px; width: 580px; max-width: 95vw; max-height: 90vh;
+    overflow-y: auto; box-shadow: var(--shadow-lg);
+    animation: slideIn 0.25s ease;
+  }
+  .modal h2 {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 800; margin-bottom: 20px; color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .modal .form-row { display: flex; gap: 12px; }
+  .modal .form-row .form-group { flex: 1; }
+  .modal .form-group { margin-bottom: 14px; }
+  .modal label {
+    display: block; font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 5px; font-weight: 700;
+  }
+  .modal input, .modal select, .modal textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 12px; border-radius: 8px; font-size: 13px; font-family: var(--font-body); outline: none;
+    transition: all 0.2s;
+  }
+  .modal textarea { min-height: 70px; resize: vertical; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+
+  /* Updates log */
+  .updates-log { max-height: 180px; overflow-y: auto; margin-top: 8px; }
+  .update-entry {
+    padding: 8px 12px; border-left: 3px solid var(--accent); margin-bottom: 6px;
+    background: var(--surface2); border-radius: 0 8px 8px 0; font-size: 12px;
+    transition: transform 0.15s;
+  }
+  .update-entry:hover { transform: translateX(2px); }
+  .update-entry .ue-date { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.3px; }
+  .update-entry .ue-text { color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+  .add-update-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-update-row input {
+    flex: 1; padding: 7px 12px; font-size: 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+    outline: none; font-family: var(--font-body);
+  }
+  .add-update-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .add-update-row button {
+    padding: 7px 14px; font-size: 12px; border-radius: 8px; border: 1px solid var(--accent);
+    background: var(--accent-light); color: var(--accent); cursor: pointer; font-weight: 700;
+    white-space: nowrap; font-family: var(--font-body); transition: all 0.15s;
+  }
+  .add-update-row button:hover { background: var(--accent); color: #fff; }
+
+  /* Owner Management */
+  .owner-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .owner-chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px 4px 12px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
+    font-size: 12px; color: var(--text-secondary); font-weight: 500;
+    transition: all 0.15s;
+  }
+  .owner-chip:hover { border-color: var(--border-hover); }
+  .owner-chip button {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 14px; padding: 0 2px; line-height: 1; transition: color 0.15s;
+  }
+  .owner-chip button:hover { color: var(--red); }
+  .add-owner-row { display: flex; gap: 5px; margin-top: 8px; }
+  .add-owner-row input {
+    flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+    outline: none; font-family: var(--font-body);
+  }
+  .add-owner-row input:focus { border-color: var(--accent); }
+  .add-owner-row button {
+    padding: 6px 12px; font-size: 12px; border-radius: 8px; border: 1px solid var(--accent);
+    background: var(--accent-light); color: var(--accent); cursor: pointer; font-weight: 700;
+    font-family: var(--font-body); transition: all 0.15s;
+  }
+  .add-owner-row button:hover { background: var(--accent); color: #fff; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .tab {
+    padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+  /* Login overlay */
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: var(--bg-mesh);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-overlay::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 40px; width: 380px;
+    box-shadow: var(--shadow-lg); text-align: center;
+    position: relative; z-index: 1;
+    animation: slideIn 0.3s ease;
+  }
+  .login-box .login-logo {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 20px; font-family: var(--font-display);
+    margin: 0 auto 20px; letter-spacing: -0.5px;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .login-box h2 {
+    font-family: var(--font-display); font-size: 22px; font-weight: 800;
+    margin-bottom: 6px; letter-spacing: -0.5px;
+  }
+  .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+  .login-box input[type="password"] {
+    width: 100%; padding: 12px 16px; border-radius: 10px; font-size: 14px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+    outline: none; font-family: var(--font-body); text-align: center;
+    letter-spacing: 2px; transition: all 0.2s;
+  }
+  .login-box input[type="password"]:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .login-box .login-btn {
+    width: 100%; margin-top: 14px; padding: 12px; border-radius: 10px;
+    background: var(--accent); color: #fff; border: none; font-size: 14px;
+    font-weight: 700; cursor: pointer; font-family: var(--font-body);
+    transition: background 0.2s;
+  }
+  .login-box .login-btn:hover { background: var(--accent-hover); }
+  .login-error {
+    color: var(--red); font-size: 12px; font-weight: 600;
+    margin-top: 10px; display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">NL</div>
+    <h2>Critical Path Tracker</h2>
+    <p>Enter the team password to continue</p>
+    <input type="password" id="loginPassword" placeholder="Password" autofocus>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">NL</div>
+    <h1>Critical Path Tracker<span>NLHS Go-Live</span></h1>
+  </div>
+  <div class="header-right">
+    <div class="sync-indicator">
+      <span class="sync-dot"></span>
+      <span id="lastUpdated">Connecting...</span>
+    </div>
+    <button class="btn btn-dark-toggle" onclick="toggleDarkMode()" id="darkToggle" title="Toggle dark mode">&#9790;</button>
+    <button class="btn btn-ghost" onclick="openSettingsModal()" title="Manage Owners">&#9881; Owners</button>
+    <button class="btn btn-email" onclick="sendEmail()">&#9993; Email</button>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Task</button>
+    <button class="btn btn-icon btn-ghost" onclick="exportData()" title="Export JSON">&#8681;</button>
+    <button class="btn btn-icon btn-ghost" onclick="importData()" title="Import JSON">&#8679;</button>
+    <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="quick-add-bar">
+  <input type="text" class="qa-task" id="qaTask" placeholder="Task name...">
+  <input type="text" class="qa-desc" id="qaDesc" placeholder="Description...">
+  <select id="qaSection"><option value="">Section...</option></select>
+  <select id="qaEpic"><option value="">Epic Owner...</option></select>
+  <select id="qaCustomer"><option value="">Customer...</option></select>
+  <button class="btn btn-primary" onclick="quickAdd()" style="padding:8px 18px">+ Quick Add</button>
+</div>
+
+<div class="filters">
+  <div class="filter-group">
+    <div class="filter-label">Epic Owner</div>
+    <div class="filter-pills" id="ownerFilters"></div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Status</div>
+    <div class="filter-pills" id="statusFilters"></div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Review</div>
+    <div class="filter-pills" id="reviewFilters"></div>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label">Search</div>
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search tasks..." oninput="renderTable()">
+    </div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px">&#10003;</th>
+          <th onclick="sortBy('task')">Task <span class="sort-arrow" id="sort-task"></span></th>
+          <th onclick="sortBy('slg')">Ref SLG <span class="sort-arrow" id="sort-slg"></span></th>
+          <th onclick="sortBy('epicOwner')">Epic Owner <span class="sort-arrow" id="sort-epicOwner"></span></th>
+          <th onclick="sortBy('analystOwner')">Customer <span class="sort-arrow" id="sort-analystOwner"></span></th>
+          <th onclick="sortBy('status')">Status <span class="sort-arrow" id="sort-status"></span></th>
+          <th onclick="sortBy('lastUpdate')">Last Update <span class="sort-arrow" id="sort-lastUpdate"></span></th>
+          <th onclick="sortBy('goal')">End of Week Goal <span class="sort-arrow" id="sort-goal"></span></th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="taskTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <h2 id="modalTitle">Add Task</h2>
+    <div class="form-group">
+      <label>Section (Owner Group)</label>
+      <select id="fSection"><option value="">-- Select or type below --</option></select>
+      <input type="text" id="fSectionCustom" placeholder="Or type a new section..." style="margin-top:5px">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:2">
+        <label>Task Name</label>
+        <input type="text" id="fTask">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Reference SLG</label>
+        <input type="text" id="fSlg" placeholder="e.g. SLG 123456">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description / Why Needed</label>
+      <textarea id="fDescription"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Epic Owner</label>
+        <select id="fEpicOwner"><option value="">-- Select --</option></select>
+      </div>
+      <div class="form-group">
+        <label>Customer Owner</label>
+        <select id="fAnalystOwner"><option value="">-- Select --</option></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="fStatus">
+        <option value="Not Started">Not Started</option>
+        <option value="Scoping">Scoping</option>
+        <option value="Build">Build</option>
+        <option value="Dev">Dev</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Testing">Testing</option>
+        <option value="Wrap-Up">Wrap-Up</option>
+        <option value="Done">Done</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>End of Week Goal</label>
+      <textarea id="fGoal"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Updates Log</label>
+      <div class="updates-log" id="updatesLog"></div>
+      <div class="add-update-row">
+        <input type="text" id="fNewUpdate" placeholder="Add an update...">
+        <button onclick="addUpdate()">+ Add</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:0 0 auto">
+        <label>Reviewed</label>
+        <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;color:var(--text);cursor:pointer;font-weight:500">
+          <input type="checkbox" id="fReviewed" class="reviewed-check"> Mark as reviewed
+        </label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="deleteBtn" onclick="deleteTask()" style="margin-right:auto;display:none">Delete</button>
+      <button class="btn" onclick="closeModal('taskModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="width:480px">
+    <h2>Manage Owners</h2>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('epic')">Epic Owners</div>
+      <div class="tab" onclick="switchTab('customer')">Customer Owners</div>
+    </div>
+    <div class="tab-content active" id="tab-epic">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Epic staff who own critical path items.</p>
+      <div class="owner-list" id="epicOwnerList"></div>
+      <div class="add-owner-row">
+        <input type="text" id="newEpicOwner" placeholder="Add Epic owner...">
+        <button onclick="addOwner('epic')">Add</button>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-customer">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Customer analysts assigned to tasks.</p>
+      <div class="owner-list" id="customerOwnerList"></div>
+      <div class="add-owner-row">
+        <input type="text" id="newCustomerOwner" placeholder="Add customer owner...">
+        <button onclick="addOwner('customer')">Add</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('settingsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Initial Data ──
+const INITIAL_DATA = [
+  { section: "HARESH -- Conversions & Technical", task: "PH Episode Import", description: "Importing PH Episodes is part of conversion scope", epicOwner: "Haresh", analystOwner: "Christa Brenson", status: "Testing", goal: "Haresh import on 3/5 and validate with Christa one more time. Pass extract and validation document to 4 validators; get sign-off next week." },
+  { section: "HARESH -- Conversions & Technical", task: "CDC Episode Import", description: "Importing CDC Episodes is part of conversion scope", epicOwner: "Haresh", analystOwner: "Lynnette", status: "Testing", goal: "Haresh import on 3/5 and Lynnette validates tomorrow. Pass extract and validation document to 2 CDC-specific validators; get sign-off next week." },
+  { section: "HARESH -- Conversions & Technical", task: "Dev Health Episode Import (BH)", description: "Importing Dev Health Episodes is part of conversion scope", epicOwner: "Haresh", analystOwner: "Terri-Lynn (BH)", status: "Testing", goal: "Haresh import on 3/6 to identify technical errors and notify Terri-Lynn. Discuss sign-off/validation approach with Shane." },
+  { section: "HARESH -- Conversions & Technical", task: "MHA Episode Import (BH) -- CRMS", description: "Importing MHA Episodes is part of conversion scope", epicOwner: "Haresh", analystOwner: "April (BH)", status: "Testing", goal: "Haresh import on 3/6 to identify technical errors and notify Terri-Lynn. Discuss sign-off/validation approach with Shane at airport." },
+  { section: "HARESH -- Conversions & Technical", task: "MHA Episode Import (BH) -- Other Systems", description: "MHA Episodes from EMR and Meditech were out of scope; need a bare-bones import", epicOwner: "Conor (PM) / Haresh (Tech)", analystOwner: "April (BH)", status: "Scoping", goal: "April emailed MHA leads to complete patient list sheet (due next week). Haresh working on combining data code with CRMS. Haresh to discuss timeline with Shane at airport." },
+  { section: "HARESH -- Conversions & Technical", task: "CSP Episode Import (Dorothy)", description: "Importing CSP Episodes is part of conversion scope", epicOwner: "Haresh", analystOwner: "Jenn / Lori (DoCo)", status: "Build", goal: "Finish coding for this import this weekend." },
+  { section: "HARESH -- Conversions & Technical", task: "Immunization Barcoding Validation", description: "Validate all immunization barcodes are working -- required for workflows and scanner ROI", epicOwner: "Haresh", analystOwner: "Christa", status: "Testing", goal: "Analysts and Haresh to visit depot to test vaccines. 6 remaining are Willow-related -- Haresh to follow up with Emily (Boost) on timelines and escalate as needed." },
+  { section: "HARESH -- Conversions & Technical", task: "HealtheNL Extract", description: "Daily immunization extract from Epic to HealtheNL -- required for provincial interoperability", epicOwner: "Haresh", analystOwner: "TBD", status: "Testing", goal: "Haresh revalidated data from Sanjay and Orion team. Haresh to call Sanjay and send to HealtheNL." },
+  { section: "HARESH -- Conversions & Technical", task: "CRMS Immunization Feed Issues", description: "Immunizations from CRMS converting to Epic -- key clinical data element for PH", epicOwner: "Haresh", analystOwner: "Lynnette", status: "Testing", goal: "Lewis G (Engine Analyst) made vaccine updates. Haresh to ping Sherlock to reload messages and revalidate." },
+  { section: "HARESH -- Conversions & Technical", task: "Form Filler Retesting", description: "Technical updates to form filler generation require HP to retest workflows -- form filler is critical to certain workflows", epicOwner: "Haresh", analystOwner: "Lynnette", status: "Dev", goal: "Haresh following up with Franklin on R&D discussions and timeline; to notify Michelle (TC) of outcome." },
+  { section: "HARESH -- Conversions & Technical", task: "Cervical Cancer Screening Finalization", description: "Finalize project PowerPoint with Patrick and define next steps for the program", epicOwner: "Haresh", analystOwner: "Patrick", status: "Wrap-Up", goal: "Haresh to summarize the NP issue and call Nick to determine if they can own this work." },
+  { section: "HARESH -- Conversions & Technical", task: "Conversions -- Notes Load", description: "Importing CRMS Notes is part of conversion scope", epicOwner: "Haresh", analystOwner: "All", status: "Testing", goal: "Haresh to pass mapping document to Ryan for provider mapping and notify interface team when additional users are mapped. Check in with Krista King on CYFS/APA (BH/DoCo) notes exclusion." },
+  { section: "HARESH -- Conversions & Technical", task: "Conversions -- TB Skin Test Issues", description: "Importing TB Tests is part of conversion scope", epicOwner: "Haresh", analystOwner: "Christa", status: "Testing", goal: "Haresh and Christa to finish testing the TB test printgroup and validate in PJX." },
+  { section: "HARESH -- Conversions & Technical", task: "Department Auditing", description: "Several department settings are incorrect -- need audit to ensure referrals, schedules, etc. are routing properly", epicOwner: "Haresh", analystOwner: "Christa", status: "Wrap-Up", goal: "Haresh to review with Lynnette. Lynnette migrated settings to PRD; Haresh to spot-check 1-2." },
+  { section: "HARESH -- Conversions & Technical", task: "Health Coach Readiness", description: "Health Coaches are part of scope", epicOwner: "Haresh", analystOwner: "Lynnette", status: "In Progress", goal: "Set up final readiness for these users." },
+  { section: "HARESH -- Conversions & Technical", task: "CDC Workflows", description: "CDC is part of Epic workflows", epicOwner: "Haresh", analystOwner: "Lynnette", status: "Not Started", goal: "Meeting scheduled for Friday. Lynnette working on decisions with the CDC workgroup." },
+  { section: "ANDREW -- Workflows & Readiness", task: "Significant Findings", description: "Needed for CDC Intake process", epicOwner: "Andrew", analystOwner: "Lynnette", status: "In Progress", goal: "Andrew to walk to the Beaker room and speak with Kirk to move this forward." },
+  { section: "ANDREW -- Workflows & Readiness", task: "Consents Workflow for PH", description: "Needed for Public Health workflows", epicOwner: "Andrew", analystOwner: "Lynnette", status: "In Progress", goal: "Andrew has been meeting with Lynnette over the past few days. Lynnette working to finish proof of concept this week." },
+  { section: "ANDREW -- Workflows & Readiness", task: "Mass Clinic Workflow for Immunization", description: "Determine scope and go-live necessity", epicOwner: "Andrew", analystOwner: "Lynnette", status: "In Progress", goal: "Andrew to align with Lynnette on the need for online scheduling for the mass clinic." },
+  { section: "ANDREW -- Workflows & Readiness", task: "School Immunization", description: "Discussed onsite -- not required for go-live, but should be data-collected", epicOwner: "Andrew", analystOwner: "Lynnette", status: "In Progress", goal: "Andrew to inform PPH users and discuss how to document vaccines in their normal departments." },
+  { section: "ANDREW -- Workflows & Readiness", task: "Indigenous Partners", description: "Full critical path document in place", epicOwner: "Andrew", analystOwner: "N/A", status: "In Progress", goal: "Andrew to follow up weekly and raise in daily critical meeting. Need to hold stakeholders accountable to keep this on track." },
+  { section: "ANDREW -- Workflows & Readiness", task: "MAID Readiness", description: "MAID users are part of scope", epicOwner: "Andrew", analystOwner: "TBD", status: "In Progress", goal: "Andrew conducting final readiness session on March 23. Andrew working with Beacon to obtain a test patient." },
+  { section: "ANDREW -- Workflows & Readiness", task: "Overall Readiness", description: "General readiness activities", epicOwner: "Andrew", analystOwner: "N/A", status: "In Progress", goal: "Elaine has fireside chats set up. Andrew to ask about superuser breakout. Other breakouts still need to be scheduled (e.g., CDCN training)." },
+  { section: "ANDREW -- Workflows & Readiness", task: "Tip Sheets", description: "Needed for go-live", epicOwner: "Andrew", analystOwner: "N/A", status: "In Progress", goal: "Amy built out the superuser packet. Tip sheets from protostars need cleanup. Andrew to connect with Conor about tip sheets." },
+  { section: "TYLER -- EUD & Stroke Coordinator", task: "Stroke Coordinator Workflow", description: "Last-minute scope addition -- additional users who follow up in ED", epicOwner: "Tyler", analystOwner: "Christa", status: "In Progress", goal: "Build inputs are in place. Tyler has not had time yet; likely a weekend project." },
+  { section: "TYLER -- EUD & Stroke Coordinator", task: "EUD Issues", description: "Public Health has vacant positions that need devices assigned", epicOwner: "Tyler", analystOwner: "Beth", status: "In Progress", goal: "Andrew to update EUD spreadsheet to track this." }
+];
+
+// ── State ──
+let tasks = [];
+let owners = {
+  epic: ['Haresh', 'Andrew', 'Tyler', 'Conor'],
+  customer: ['Christa Brenson', 'Lynnette', 'Christa', 'April (BH)', 'Terri-Lynn (BH)', 'Jenn / Lori (DoCo)', 'Patrick', 'Beth']
+};
+let editingIdx = null;
+let sortCol = null;
+let sortDir = 1;
+let activeOwnerFilter = 'All';
+let activeStatusFilter = 'All';
+let activeReviewFilter = 'All';
+
+const STATUS_ORDER = ['Not Started', 'Scoping', 'Build', 'Dev', 'In Progress', 'Testing', 'Wrap-Up', 'Done'];
+const API_URL = '/api/tasks';
+const OWNERS_KEY = 'nlhs_cp_owners';
+const THEME_KEY = 'nlhs_cp_theme';
+const TOKEN_KEY = 'nlhs_cp_token';
+
+let authToken = localStorage.getItem(TOKEN_KEY) || '';
+
+// ── Dark Mode ──
+function toggleDarkMode() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem(THEME_KEY, isDark ? 'light' : 'dark');
+  document.getElementById('darkToggle').innerHTML = isDark ? '&#9790;' : '&#9788;';
+}
+function loadTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('darkToggle').innerHTML = '&#9788;';
+  }
+}
+
+// ── Server API ──
+function authHeaders() {
+  const h = {'Content-Type':'application/json'};
+  if (authToken) h['X-Auth-Token'] = authToken;
+  return h;
+}
+
+async function fetchTasks() {
+  try {
+    const res = await fetch(API_URL, { headers: authHeaders() });
+    if (res.status === 401) { showLogin(); return null; }
+    if (res.ok) { const d = await res.json(); if (d.length > 0) return d; }
+  } catch(e) {}
+  return null;
+}
+async function pushTasks() {
+  try {
+    const res = await fetch(API_URL, { method: 'POST', headers: authHeaders(), body: JSON.stringify(tasks) });
+    if (res.status === 401) { showLogin(); }
+  } catch(e) {}
+}
+
+// ── Login ──
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('loginPassword').focus();
+}
+function hideLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+async function doLogin() {
+  const pw = document.getElementById('loginPassword').value;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      authToken = data.token;
+      localStorage.setItem(TOKEN_KEY, authToken);
+      document.getElementById('loginError').style.display = 'none';
+      document.getElementById('loginPassword').value = '';
+      hideLogin();
+      init();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginPassword').focus();
+    }
+  } catch(e) {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+// ── Init ──
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/auth-required');
+    const data = await res.json();
+    if (data.required) {
+      // Try existing token
+      const testRes = await fetch(API_URL, { headers: authHeaders() });
+      if (testRes.status === 401) { showLogin(); return false; }
+    }
+  } catch(e) {}
+  return true;
+}
+
+async function init() {
+  loadTheme();
+  const authed = await checkAuth();
+  if (!authed) return;
+
+  const savedOwners = localStorage.getItem(OWNERS_KEY);
+  if (savedOwners) { try { owners = JSON.parse(savedOwners); } catch(e) {} }
+
+  const serverData = await fetchTasks();
+  if (serverData && serverData.length > 0) {
+    tasks = serverData;
+  } else {
+    tasks = INITIAL_DATA.map(t => ({...t, id: crypto.randomUUID(), slg: '', updates: [], reviewed: false}));
+    await pushTasks();
+  }
+  tasks.forEach(t => {
+    if (!t.id) t.id = crypto.randomUUID();
+    if (!t.updates) t.updates = [];
+    if (t.reviewed === undefined) t.reviewed = false;
+    if (!t.slg) t.slg = '';
+  });
+
+  syncOwnersFromTasks();
+  buildFilters();
+  populateQuickAdd();
+  renderStats();
+  renderTable();
+  document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+  setInterval(autoRefresh, 15000);
+}
+
+function syncOwnersFromTasks() {
+  tasks.forEach(t => {
+    if (t.epicOwner) {
+      const name = t.epicOwner.split('/')[0].split('(')[0].trim();
+      if (name && !owners.epic.includes(name)) owners.epic.push(name);
+    }
+    if (t.analystOwner && t.analystOwner !== 'N/A' && t.analystOwner !== 'TBD' && t.analystOwner !== 'All') {
+      if (!owners.customer.includes(t.analystOwner)) owners.customer.push(t.analystOwner);
+    }
+  });
+  saveOwners();
+}
+
+function saveOwners() { localStorage.setItem(OWNERS_KEY, JSON.stringify(owners)); }
+
+async function autoRefresh() {
+  const serverData = await fetchTasks();
+  if (serverData && serverData.length > 0) {
+    tasks = serverData;
+    tasks.forEach(t => {
+      if (!t.id) t.id = crypto.randomUUID();
+      if (!t.updates) t.updates = [];
+      if (t.reviewed === undefined) t.reviewed = false;
+      if (!t.slg) t.slg = '';
+    });
+    buildFilters();
+    renderTable();
+    document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+  }
+}
+
+async function save() {
+  await pushTasks();
+  document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+}
+
+// ── Filters ──
+function buildFilters() {
+  const epicNames = ['All', ...new Set(tasks.map(t => t.epicOwner.split('/')[0].split('(')[0].trim()).filter(Boolean))];
+  document.getElementById('ownerFilters').innerHTML = epicNames.map(o =>
+    `<div class="pill ${o === activeOwnerFilter ? 'active' : ''}" onclick="setOwnerFilter('${o.replace(/'/g,"\\'")}')">${esc(o)}</div>`
+  ).join('');
+
+  document.getElementById('statusFilters').innerHTML = ['All', ...STATUS_ORDER].map(s =>
+    `<div class="pill ${s === activeStatusFilter ? 'active' : ''}" onclick="setStatusFilter('${s}')">${s}</div>`
+  ).join('');
+
+  document.getElementById('reviewFilters').innerHTML = ['All', 'Reviewed', 'Unreviewed'].map(r =>
+    `<div class="pill ${r === activeReviewFilter ? 'active' : ''}" onclick="setReviewFilter('${r}')">${r}</div>`
+  ).join('');
+}
+function setOwnerFilter(o) { activeOwnerFilter = o; buildFilters(); renderTable(); }
+function setStatusFilter(s) { activeStatusFilter = s; buildFilters(); renderTable(); }
+function setReviewFilter(r) { activeReviewFilter = r; buildFilters(); renderTable(); }
+
+// ── Quick Add ──
+function populateQuickAdd() {
+  const sections = [...new Set(tasks.map(t => t.section).filter(Boolean))];
+  document.getElementById('qaSection').innerHTML = '<option value="">Section...</option>' + sections.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  document.getElementById('qaEpic').innerHTML = '<option value="">Epic Owner...</option>' + owners.epic.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  document.getElementById('qaCustomer').innerHTML = '<option value="">Customer...</option><option value="TBD">TBD</option>' + owners.customer.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+}
+
+function quickAdd() {
+  const taskName = document.getElementById('qaTask').value.trim();
+  if (!taskName) { alert('Task name is required'); return; }
+  tasks.push({
+    id: crypto.randomUUID(),
+    section: document.getElementById('qaSection').value,
+    task: taskName,
+    slg: '',
+    description: document.getElementById('qaDesc').value.trim(),
+    epicOwner: document.getElementById('qaEpic').value,
+    analystOwner: document.getElementById('qaCustomer').value || 'TBD',
+    status: 'Not Started',
+    goal: '',
+    updates: [],
+    reviewed: false
+  });
+  save();
+  document.getElementById('qaTask').value = '';
+  document.getElementById('qaDesc').value = '';
+  buildFilters();
+  populateQuickAdd();
+  renderTable();
+}
+
+// ── Stats ──
+function renderStats() {
+  const total = tasks.length;
+  const done = tasks.filter(t => t.status === 'Done').length;
+  const testing = tasks.filter(t => t.status === 'Testing').length;
+  const notStarted = tasks.filter(t => t.status === 'Not Started').length;
+  const active = tasks.filter(t => ['In Progress','Build','Dev','Scoping'].includes(t.status)).length;
+  const wrapUp = tasks.filter(t => t.status === 'Wrap-Up').length;
+  const reviewed = tasks.filter(t => t.reviewed).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const pctColor = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--orange)' : 'var(--red)';
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card animate-in"><div class="stat-value">${total}</div><div class="stat-label">Total Tasks</div></div>
+    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--green)">${done}</div><div class="stat-label">Done</div></div>
+    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--blue)">${testing}</div><div class="stat-label">Testing</div></div>
+    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--orange)">${active}</div><div class="stat-label">Active</div></div>
+    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--cyan)">${wrapUp}</div><div class="stat-label">Wrap-Up</div></div>
+    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${notStarted}</div><div class="stat-label">Not Started</div></div>
+    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--accent)">${reviewed}<span style="font-size:16px;opacity:0.5">/${total}</span></div><div class="stat-label">Reviewed</div></div>
+    <div class="stat-card animate-in">
+      <div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Complete</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pctColor};color:${pctColor}"></div></div>
+    </div>`;
+}
+
+// ── Helpers ──
+function statusClass(s) { return 'status-' + s.toLowerCase().replace(/\s+/g, '-'); }
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+// ── Sorting ──
+function sortBy(col) {
+  if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
+  renderTable();
+}
+
+// ── Render Table ──
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = tasks.filter(t => {
+    if (activeOwnerFilter !== 'All' && !t.epicOwner.includes(activeOwnerFilter)) return false;
+    if (activeStatusFilter !== 'All' && t.status !== activeStatusFilter) return false;
+    if (activeReviewFilter === 'Reviewed' && !t.reviewed) return false;
+    if (activeReviewFilter === 'Unreviewed' && t.reviewed) return false;
+    if (search) {
+      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (sortCol) {
+    filtered.sort((a, b) => {
+      let va, vb;
+      if (sortCol === 'status') {
+        va = STATUS_ORDER.indexOf(a.status); vb = STATUS_ORDER.indexOf(b.status); return (va - vb) * sortDir;
+      } else if (sortCol === 'lastUpdate') {
+        va = a.updates && a.updates.length ? new Date(a.updates[a.updates.length-1].date).getTime() : 0;
+        vb = b.updates && b.updates.length ? new Date(b.updates[b.updates.length-1].date).getTime() : 0;
+        return (va - vb) * sortDir;
+      } else {
+        va = a[sortCol] || ''; vb = b[sortCol] || '';
+        return String(va).localeCompare(String(vb)) * sortDir;
+      }
+    });
+  }
+
+  document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+  if (sortCol) { const a = document.getElementById('sort-' + sortCol); if (a) a.textContent = sortDir === 1 ? '\u25B2' : '\u25BC'; }
+
+  const tbody = document.getElementById('taskTable');
+  let html = '';
+  let lastSection = '';
+
+  filtered.forEach(t => {
+    const realIdx = tasks.indexOf(t);
+    if (t.section !== lastSection && !sortCol) {
+      lastSection = t.section;
+      html += `<tr class="section-row"><td colspan="9">${esc(t.section)}</td></tr>`;
+    }
+
+    const lastUp = t.updates && t.updates.length ? t.updates[t.updates.length - 1] : null;
+
+    html += `<tr ondblclick="openEditModal(${realIdx})">
+      <td style="text-align:center">
+        <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed">
+      </td>
+      <td class="task-name">${esc(t.task)}<div class="task-desc">${esc(t.description)}</div></td>
+      <td class="slg">${t.slg ? esc(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
+      <td>
+        <select class="quick-owner" onchange="quickEpicOwner(${realIdx}, this.value)" title="Change Epic Owner">
+          ${owners.epic.map(o => `<option value="${esc(o)}" ${t.epicOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+          ${!owners.epic.includes(t.epicOwner) && t.epicOwner ? `<option value="${esc(t.epicOwner)}" selected>${esc(t.epicOwner)}</option>` : ''}
+        </select>
+        <span class="owner-badge owner-epic">${esc(t.epicOwner)}</span>
+      </td>
+      <td>
+        <select class="quick-owner" onchange="quickCustomerOwner(${realIdx}, this.value)" title="Change Customer Owner">
+          <option value="TBD" ${t.analystOwner === 'TBD' ? 'selected' : ''}>TBD</option>
+          <option value="N/A" ${t.analystOwner === 'N/A' ? 'selected' : ''}>N/A</option>
+          <option value="All" ${t.analystOwner === 'All' ? 'selected' : ''}>All</option>
+          ${owners.customer.map(o => `<option value="${esc(o)}" ${t.analystOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+          ${!owners.customer.includes(t.analystOwner) && !['TBD','N/A','All'].includes(t.analystOwner) && t.analystOwner ? `<option value="${esc(t.analystOwner)}" selected>${esc(t.analystOwner)}</option>` : ''}
+        </select>
+        <span class="owner-badge owner-customer">${esc(t.analystOwner)}</span>
+      </td>
+      <td>
+        <select class="quick-status" onchange="quickStatus(${realIdx}, this.value)">
+          ${STATUS_ORDER.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <span class="status-badge ${statusClass(t.status)}">${esc(t.status)}</span>
+      </td>
+      <td>
+        ${lastUp ? `<div class="update-text">${esc(lastUp.text)}</div><div class="update-date">${fmtDate(lastUp.date)}</div>` : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">No updates</span>'}
+      </td>
+      <td class="goal">${esc(t.goal)}</td>
+      <td>
+        <div class="row-actions">
+          <button onclick="openEditModal(${realIdx})" title="Edit">&#9998;</button>
+          <button class="del-btn" onclick="quickDelete(${realIdx})" title="Delete">&#10005;</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
+  renderStats();
+}
+
+function quickStatus(idx, val) { tasks[idx].status = val; save(); renderTable(); }
+function quickEpicOwner(idx, val) { tasks[idx].epicOwner = val; save(); renderTable(); }
+function quickCustomerOwner(idx, val) { tasks[idx].analystOwner = val; save(); renderTable(); }
+function toggleReviewed(idx, val) { tasks[idx].reviewed = val; save(); renderTable(); }
+function quickDelete(idx) {
+  if (!confirm('Delete "' + tasks[idx].task + '"?')) return;
+  tasks.splice(idx, 1); save(); buildFilters(); renderTable();
+}
+
+// ── Task Modal ──
+function populateModalDropdowns() {
+  const sections = [...new Set(tasks.map(t => t.section).filter(Boolean))];
+  const secSel = document.getElementById('fSection');
+  secSel.innerHTML = '<option value="">-- Select existing section --</option>' + sections.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+  const epicSel = document.getElementById('fEpicOwner');
+  epicSel.innerHTML = '<option value="">-- Select --</option>' + owners.epic.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+
+  const custSel = document.getElementById('fAnalystOwner');
+  custSel.innerHTML = '<option value="">-- Select --</option><option value="TBD">TBD</option><option value="N/A">N/A</option><option value="All">All</option>' +
+    owners.customer.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+}
+
+function renderUpdatesLog(updates) {
+  const container = document.getElementById('updatesLog');
+  if (!updates || updates.length === 0) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No updates yet.</p>';
+    return;
+  }
+  container.innerHTML = [...updates].reverse().map(u =>
+    `<div class="update-entry">
+      <div class="ue-date">${fmtDate(u.date)}</div>
+      <div class="ue-text">${esc(u.text)}</div>
+    </div>`
+  ).join('');
+}
+
+function addUpdate() {
+  const input = document.getElementById('fNewUpdate');
+  const text = input.value.trim();
+  if (!text) return;
+  if (editingIdx !== null) {
+    if (!tasks[editingIdx].updates) tasks[editingIdx].updates = [];
+    tasks[editingIdx].updates.push({ text, date: new Date().toISOString() });
+    renderUpdatesLog(tasks[editingIdx].updates);
+    save();
+  }
+  input.value = '';
+}
+
+function openAddModal() {
+  editingIdx = null;
+  document.getElementById('modalTitle').textContent = 'Add Task';
+  document.getElementById('deleteBtn').style.display = 'none';
+  populateModalDropdowns();
+  document.getElementById('fSection').value = tasks.length ? tasks[tasks.length - 1].section : '';
+  document.getElementById('fSectionCustom').value = '';
+  document.getElementById('fTask').value = '';
+  document.getElementById('fSlg').value = '';
+  document.getElementById('fDescription').value = '';
+  document.getElementById('fEpicOwner').value = '';
+  document.getElementById('fAnalystOwner').value = '';
+  document.getElementById('fStatus').value = 'Not Started';
+  document.getElementById('fGoal').value = '';
+  document.getElementById('fReviewed').checked = false;
+  document.getElementById('fNewUpdate').value = '';
+  renderUpdatesLog([]);
+  document.getElementById('taskModal').classList.add('open');
+}
+
+function openEditModal(idx) {
+  editingIdx = idx;
+  const t = tasks[idx];
+  document.getElementById('modalTitle').textContent = 'Edit Task';
+  document.getElementById('deleteBtn').style.display = 'block';
+  populateModalDropdowns();
+  document.getElementById('fSection').value = t.section || '';
+  document.getElementById('fSectionCustom').value = '';
+  document.getElementById('fTask').value = t.task || '';
+  document.getElementById('fSlg').value = t.slg || '';
+  document.getElementById('fDescription').value = t.description || '';
+  document.getElementById('fEpicOwner').value = t.epicOwner || '';
+  document.getElementById('fAnalystOwner').value = t.analystOwner || '';
+  document.getElementById('fStatus').value = t.status || 'Not Started';
+  document.getElementById('fGoal').value = t.goal || '';
+  document.getElementById('fReviewed').checked = t.reviewed || false;
+  document.getElementById('fNewUpdate').value = '';
+  renderUpdatesLog(t.updates || []);
+  document.getElementById('taskModal').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveTask() {
+  const sectionSelect = document.getElementById('fSection').value;
+  const sectionCustom = document.getElementById('fSectionCustom').value.trim();
+  const section = sectionCustom || sectionSelect;
+  const existingUpdates = editingIdx !== null ? (tasks[editingIdx].updates || []) : [];
+
+  const data = {
+    id: editingIdx !== null ? tasks[editingIdx].id : crypto.randomUUID(),
+    section, task: document.getElementById('fTask').value.trim(),
+    slg: document.getElementById('fSlg').value.trim(),
+    description: document.getElementById('fDescription').value.trim(),
+    epicOwner: document.getElementById('fEpicOwner').value.trim(),
+    analystOwner: document.getElementById('fAnalystOwner').value.trim(),
+    status: document.getElementById('fStatus').value,
+    goal: document.getElementById('fGoal').value.trim(),
+    updates: existingUpdates,
+    reviewed: document.getElementById('fReviewed').checked
+  };
+  if (!data.task) { alert('Task name is required'); return; }
+  if (editingIdx !== null) { tasks[editingIdx] = data; } else { tasks.push(data); }
+  save(); closeModal('taskModal'); buildFilters(); populateQuickAdd(); renderTable();
+}
+
+function deleteTask() {
+  if (editingIdx === null) return;
+  if (!confirm('Delete this task?')) return;
+  tasks.splice(editingIdx, 1); save(); closeModal('taskModal'); buildFilters(); renderTable();
+}
+
+// ── Owner Management ──
+function openSettingsModal() {
+  renderOwnerLists();
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function renderOwnerLists() {
+  document.getElementById('epicOwnerList').innerHTML = owners.epic.map(o =>
+    `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('epic','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
+  ).join('');
+  document.getElementById('customerOwnerList').innerHTML = owners.customer.map(o =>
+    `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('customer','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
+  ).join('');
+}
+
+function addOwner(type) {
+  const inputId = type === 'epic' ? 'newEpicOwner' : 'newCustomerOwner';
+  const input = document.getElementById(inputId);
+  const name = input.value.trim();
+  if (!name) return;
+  if (!owners[type].includes(name)) {
+    owners[type].push(name); saveOwners(); renderOwnerLists(); populateQuickAdd();
+  }
+  input.value = '';
+}
+
+function removeOwner(type, name) {
+  owners[type] = owners[type].filter(o => o !== name);
+  saveOwners(); renderOwnerLists(); populateQuickAdd();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'loginPassword') doLogin();
+  if (e.key === 'Enter' && e.target.id === 'newEpicOwner') addOwner('epic');
+  if (e.key === 'Enter' && e.target.id === 'newCustomerOwner') addOwner('customer');
+  if (e.key === 'Enter' && e.target.id === 'fNewUpdate') addUpdate();
+  if (e.key === 'Enter' && e.target.id === 'qaTask') quickAdd();
+  if (e.key === 'Escape') { closeModal('taskModal'); closeModal('settingsModal'); }
+});
+
+// ── Email Summary ──
+function sendEmail() {
+  const date = new Date().toLocaleDateString();
+  const total = tasks.length;
+  const done = tasks.filter(t => t.status === 'Done').length;
+  const testing = tasks.filter(t => t.status === 'Testing').length;
+  const active = tasks.filter(t => ['In Progress','Build','Dev','Scoping'].includes(t.status)).length;
+  const notStarted = tasks.filter(t => t.status === 'Not Started').length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  const statusColors = {
+    'Testing': '#2563eb', 'Build': '#d97706', 'Dev': '#7c3aed', 'Scoping': '#0891b2',
+    'Wrap-Up': '#16a34a', 'In Progress': '#d97706', 'Not Started': '#dc2626', 'Done': '#16a34a'
+  };
+  const statusBg = {
+    'Testing': '#eff6ff', 'Build': '#fffbeb', 'Dev': '#f5f3ff', 'Scoping': '#ecfeff',
+    'Wrap-Up': '#f0fdf4', 'In Progress': '#fffbeb', 'Not Started': '#fef2f2', 'Done': '#f0fdf4'
+  };
+
+  let html = `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:900px;margin:0 auto">`;
+  html += `<div style="background:#2563eb;color:#fff;padding:18px 28px;border-radius:10px 10px 0 0">
+    <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.3px">NLHS Critical Path Update</h2>
+    <p style="margin:5px 0 0;font-size:13px;opacity:0.85">${date}</p>
+  </div>`;
+
+  html += `<div style="display:flex;background:#f8f8f5;padding:14px 28px;border-bottom:1px solid #e2e0d8;gap:28px;flex-wrap:wrap">`;
+  [{label:'Total',val:total,color:'#1c1917'}, {label:'Done',val:done,color:'#16a34a'},
+   {label:'Testing',val:testing,color:'#2563eb'}, {label:'Active',val:active,color:'#d97706'},
+   {label:'Not Started',val:notStarted,color:'#dc2626'}, {label:'Complete',val:pct+'%',color:pct>=70?'#16a34a':pct>=40?'#d97706':'#dc2626'}
+  ].forEach(s => {
+    html += `<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:${s.color}">${s.val}</div><div style="font-size:10px;color:#a8a29e;text-transform:uppercase;letter-spacing:0.8px;font-weight:600">${s.label}</div></div>`;
+  });
+  html += `</div>`;
+
+  let lastSection = '';
+  html += `<table style="width:100%;border-collapse:collapse;font-size:13px">`;
+  tasks.forEach(t => {
+    if (t.section !== lastSection) {
+      lastSection = t.section;
+      html += `<tr><td colspan="6" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:11px 18px;border-bottom:2px solid #2563eb;font-size:13px">${esc(t.section)}</td></tr>`;
+    }
+    const sc = statusColors[t.status] || '#666';
+    const sb = statusBg[t.status] || '#f5f5f5';
+    const lastUp = t.updates && t.updates.length ? t.updates[t.updates.length - 1] : null;
+    html += `<tr style="border-bottom:1px solid #e2e0d8">
+      <td style="padding:9px 18px;font-weight:600;width:200px;vertical-align:top">${esc(t.task)}</td>
+      <td style="padding:9px 8px;color:#2563eb;font-size:12px;vertical-align:top;white-space:nowrap">${t.slg ? esc(t.slg) : ''}</td>
+      <td style="padding:9px 8px;vertical-align:top">
+        <span style="background:${sb};color:${sc};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(t.status)}</span>
+      </td>
+      <td style="padding:9px 8px;color:#57534e;font-size:12px;vertical-align:top">
+        <span style="color:#2563eb">${esc(t.epicOwner)}</span> / <span style="color:#7c3aed">${esc(t.analystOwner)}</span>
+      </td>
+      <td style="padding:9px 8px;color:#57534e;font-size:12px;vertical-align:top;max-width:160px">
+        ${lastUp ? esc(lastUp.text) + '<br><span style="font-size:10px;color:#a8a29e">' + fmtDate(lastUp.date) + '</span>' : ''}
+      </td>
+      <td style="padding:9px 18px;color:#57534e;line-height:1.5;vertical-align:top">${esc(t.goal)}</td>
+    </tr>`;
+  });
+  html += `</table>`;
+  html += `<div style="padding:14px 28px;background:#f8f8f5;border-top:1px solid #e2e0d8;border-radius:0 0 10px 10px;font-size:11px;color:#a8a29e;font-weight:500">Generated from NLHS Critical Path Tracker</div></div>`;
+
+  const win = window.open('', '_blank', 'width=960,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><title>Email Preview</title>
+    <style>
+      body { font-family: Segoe UI, Arial, sans-serif; margin: 0; background: #f4f2ee; }
+      .toolbar { background: #fff; padding: 14px 28px; border-bottom: 1px solid #e2e0d8; display: flex; gap: 10px; align-items: center; position: sticky; top: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+      .toolbar button { padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid #e2e0d8; font-family: inherit; }
+      .toolbar .copy-btn { background: #2563eb; color: #fff; border-color: #2563eb; }
+      .toolbar .copy-btn:hover { background: #1d4ed8; }
+      .toolbar .mailto-btn { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+      .toolbar .mailto-btn:hover { background: #dcfce7; }
+      .preview { padding: 28px; }
+      .copied { color: #16a34a; font-size: 13px; font-weight: 700; display: none; }
+    </style>
+  </head><body>
+    <div class="toolbar">
+      <button class="copy-btn" onclick="copyHtml()">Copy to Clipboard</button>
+      <button class="mailto-btn" onclick="openMailto()">Open in Mail Client</button>
+      <span class="copied" id="copiedMsg">Copied!</span>
+      <span style="margin-left:auto;font-size:12px;color:#a8a29e">Copy and paste into Outlook</span>
+    </div>
+    <div class="preview" id="emailContent">${html}</div>
+    <script>
+      function copyHtml() {
+        const content = document.getElementById('emailContent');
+        const range = document.createRange();
+        range.selectNodeContents(content);
+        const sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(range);
+        document.execCommand('copy');
+        sel.removeAllRanges();
+        document.getElementById('copiedMsg').style.display = 'inline';
+        setTimeout(() => document.getElementById('copiedMsg').style.display = 'none', 2000);
+      }
+      function openMailto() {
+        const text = document.getElementById('emailContent').innerText;
+        window.location.href = 'mailto:?subject=' + encodeURIComponent('NLHS Critical Path Update - ${date}') + '&body=' + encodeURIComponent(text);
+      }
+    <\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ── Import/Export ──
+function exportData() {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'critical_path_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+}
+function importData() { document.getElementById('importFile').click(); }
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data)) {
+        tasks = data;
+        tasks.forEach(t => {
+          if (!t.id) t.id = crypto.randomUUID();
+          if (!t.updates) t.updates = [];
+          if (t.reviewed === undefined) t.reviewed = false;
+          if (!t.slg) t.slg = '';
+        });
+        save(); buildFilters(); populateQuickAdd(); renderTable();
+      }
+    } catch(err) { alert('Invalid JSON file'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+init();
+</script>
+</body>
+</html>
