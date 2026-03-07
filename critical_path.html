@@ -1211,6 +1211,9 @@ function renameSection(oldName) {
 }
 
 async function autoRefresh() {
+  // Skip refresh while user is editing inline (goal textarea or update input)
+  const active = document.activeElement;
+  if (active && (active.classList.contains('goal-edit-input') || active.id?.startsWith('inlineUpdateInput'))) return;
   const serverData = await fetchTasks();
   if (serverData && serverData.length > 0) {
     tasks = serverData;
