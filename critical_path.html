@@ -1043,6 +1043,7 @@ let authToken = localStorage.getItem(TOKEN_KEY) || '';
 let saveTimer = null;
 let searchTimer = null;
 let APP_PASSWORD_REQUIRED = false;
+let isEditingInline = false;
 
 function normalizeTask(t) {
   if (!t.id) t.id = crypto.randomUUID();
@@ -1379,6 +1380,7 @@ function autoLogStatusChange(idx, oldStatus, newStatus) {
 
 // ── Render Table ──
 function renderTable() {
+  if (isEditingInline) return;
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtered = tasks.filter(t => {
     if (activeOwnerFilter !== 'All' && !t.epicOwner.includes(activeOwnerFilter)) return false;
@@ -1908,6 +1910,7 @@ function getLastArchivedGoal(task) {
 
 // ── Inline Goal Editing ──
 function inlineEditGoal(idx, el) {
+  isEditingInline = true;
   const current = tasks[idx].goal || '';
   const td = el.parentElement;
   td.innerHTML = `
@@ -1918,7 +1921,7 @@ function inlineEditGoal(idx, el) {
   textarea.focus();
   textarea.setSelectionRange(textarea.value.length, textarea.value.length);
   textarea.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { e.preventDefault(); renderTable(); }
+    if (e.key === 'Escape') { e.preventDefault(); isEditingInline = false; renderTable(); }
     if (e.key === 'Tab') { e.preventDefault(); saveInlineGoal(idx); }
   });
 }
@@ -1930,6 +1933,7 @@ function saveInlineGoal(idx) {
     tasks[idx].goal = newGoal;
     save();
   }
+  isEditingInline = false;
   renderTable();
 }
 
