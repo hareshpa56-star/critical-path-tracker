@@ -530,17 +530,41 @@
 
   /* Modal multi-select */
   .modal-ms-wrap {
-    display: flex; flex-wrap: wrap; gap: 6px; padding: 8px;
+    position: relative;
+  }
+  .modal-ms-trigger {
+    display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px;
     border: 1px solid var(--border); border-radius: 8px; background: var(--surface2);
-    min-height: 36px;
+    min-height: 38px; cursor: pointer; align-items: center; transition: border-color 0.15s;
   }
-  .modal-ms-wrap label {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 12px; cursor: pointer; padding: 3px 8px; border-radius: 6px;
-    transition: background 0.1s; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
+  .modal-ms-trigger:hover { border-color: var(--accent); }
+  .modal-ms-trigger .ms-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px;
+    background: var(--accent-light); color: var(--accent);
   }
-  .modal-ms-wrap label:hover { background: var(--accent-light); }
-  .modal-ms-wrap input[type="checkbox"] { accent-color: var(--accent); }
+  .modal-ms-trigger .ms-pill.customer { background: var(--purple-bg, #f3e8ff); color: var(--purple, #7c3aed); }
+  .modal-ms-trigger .ms-placeholder {
+    font-size: 12px; color: var(--text-muted); font-style: italic;
+  }
+  .modal-ms-trigger .ms-caret {
+    margin-left: auto; font-size: 10px; color: var(--text-muted);
+  }
+  .modal-ms-dd {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 120;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    max-height: 200px; overflow-y: auto; padding: 4px 0; margin-top: 2px;
+    display: none;
+  }
+  .modal-ms-dd.open { display: block; }
+  .modal-ms-dd label {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    font-size: 12px; cursor: pointer; transition: background 0.1s;
+    text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
+  }
+  .modal-ms-dd label:hover { background: var(--accent-light); }
+  .modal-ms-dd input[type="checkbox"] { accent-color: var(--accent); }
 
   /* Updates log */
   .updates-log { max-height: 180px; overflow-y: auto; margin-top: 8px; }
@@ -1719,12 +1743,64 @@ function populateModalDropdowns() {
   const secSel = document.getElementById('fSection');
   secSel.innerHTML = '<option value="">-- Select existing section --</option>' + sections.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
 
-  const epicWrap = document.getElementById('fEpicOwnerWrap');
-  epicWrap.innerHTML = owners.epic.map(o => `<label><input type="checkbox" value="${esc(o)}" class="fEpicCb"> ${esc(o)}</label>`).join('');
-
+  buildModalMultiSelect('fEpicOwnerWrap', owners.epic, 'fEpicCb', 'epic');
   const custOpts = ['TBD', 'N/A', 'All', ...owners.customer];
-  const custWrap = document.getElementById('fAnalystOwnerWrap');
-  custWrap.innerHTML = custOpts.map(o => `<label><input type="checkbox" value="${esc(o)}" class="fCustCb"> ${esc(o)}</label>`).join('');
+  buildModalMultiSelect('fAnalystOwnerWrap', custOpts, 'fCustCb', 'customer');
+}
+
+function buildModalMultiSelect(wrapId, options, cbClass, type) {
+  const wrap = document.getElementById(wrapId);
+  const trigger = document.createElement('div');
+  trigger.className = 'modal-ms-trigger';
+  const pillsArea = document.createElement('span');
+  pillsArea.className = 'ms-pills-area';
+  pillsArea.innerHTML = '<span class="ms-placeholder">Select...</span>';
+  trigger.appendChild(pillsArea);
+  const caret = document.createElement('span');
+  caret.className = 'ms-caret';
+  caret.textContent = '\u25BC';
+  trigger.appendChild(caret);
+
+  const dd = document.createElement('div');
+  dd.className = 'modal-ms-dd';
+  options.forEach(o => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = o;
+    cb.className = cbClass;
+    cb.onchange = () => refreshModalPills(wrap, cbClass, type);
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(o));
+    dd.appendChild(lbl);
+  });
+
+  trigger.onclick = (e) => {
+    e.stopPropagation();
+    // Close other open modal dropdowns
+    document.querySelectorAll('.modal-ms-dd.open').forEach(d => { if (d !== dd) d.classList.remove('open'); });
+    dd.classList.toggle('open');
+  };
+
+  wrap.innerHTML = '';
+  wrap.appendChild(trigger);
+  wrap.appendChild(dd);
+
+  // Close on outside click
+  document.addEventListener('click', () => dd.classList.remove('open'));
+  dd.onclick = (e) => e.stopPropagation();
+}
+
+function refreshModalPills(wrap, cbClass, type) {
+  const checked = [...wrap.querySelectorAll('.' + cbClass + ':checked')].map(cb => cb.value);
+  const pillsArea = wrap.querySelector('.ms-pills-area');
+  if (checked.length === 0) {
+    pillsArea.innerHTML = '<span class="ms-placeholder">Select...</span>';
+  } else {
+    pillsArea.innerHTML = checked.map(o =>
+      `<span class="ms-pill ${type}">${esc(o)}</span>`
+    ).join('');
+  }
 }
 
 function renderUpdatesLog(updates) {
@@ -1765,6 +1841,8 @@ function openAddModal() {
   document.getElementById('fSlg').value = '';
   document.getElementById('fDescription').value = '';
   document.querySelectorAll('.fEpicCb, .fCustCb').forEach(cb => cb.checked = false);
+  refreshModalPills(document.getElementById('fEpicOwnerWrap'), 'fEpicCb', 'epic');
+  refreshModalPills(document.getElementById('fAnalystOwnerWrap'), 'fCustCb', 'customer');
   document.getElementById('fStatus').value = 'Not Started';
   document.getElementById('fPriority').value = '';
   document.getElementById('fDueDate').value = '';
@@ -1788,8 +1866,10 @@ function openEditModal(idx) {
   document.getElementById('fDescription').value = t.description || '';
   const epicList = getOwnerList(t.epicOwner);
   document.querySelectorAll('.fEpicCb').forEach(cb => cb.checked = epicList.includes(cb.value));
+  refreshModalPills(document.getElementById('fEpicOwnerWrap'), 'fEpicCb', 'epic');
   const custList = getOwnerList(t.analystOwner);
   document.querySelectorAll('.fCustCb').forEach(cb => cb.checked = custList.includes(cb.value));
+  refreshModalPills(document.getElementById('fAnalystOwnerWrap'), 'fCustCb', 'customer');
   document.getElementById('fStatus').value = t.status || 'Not Started';
   document.getElementById('fPriority').value = t.priority || '';
   document.getElementById('fDueDate').value = t.dueDate || '';
