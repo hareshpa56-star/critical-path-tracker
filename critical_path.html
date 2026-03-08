@@ -450,42 +450,15 @@
   .ms-dropdown label:hover { background: var(--accent-light); }
   .ms-dropdown input[type="checkbox"] { accent-color: var(--accent); }
 
-  /* Tags */
-  .tag-chips { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-  .tag-chip {
-    display: inline-block; padding: 2px 8px; border-radius: 12px;
-    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
-    white-space: nowrap;
+  /* Owner role badges */
+  .owner-role {
+    display: inline-block; font-size: 8px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.3px; padding: 0 4px; border-radius: 4px; margin-left: 4px;
+    vertical-align: middle;
   }
-  .tag-chip.tag-technical { background: var(--cyan-bg); color: var(--cyan); }
-  .tag-chip.tag-pm { background: var(--orange-bg); color: var(--orange); }
-  .tag-chip.tag-default { background: var(--surface2); color: var(--text-secondary); }
-  .tag-cell { cursor: pointer; min-width: 60px; }
-  .tag-cell:hover { background: var(--accent-light); border-radius: 6px; }
-  .tag-dropdown {
-    position: absolute; top: 100%; left: 0; z-index: 100;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    min-width: 200px; padding: 4px 0;
-  }
-  .tag-dropdown label {
-    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-    font-size: 12px; cursor: pointer; transition: background 0.1s;
-    text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
-  }
-  .tag-dropdown label:hover { background: var(--accent-light); }
-  .tag-add-row {
-    display: flex; gap: 4px; padding: 6px 12px; border-top: 1px solid var(--border);
-  }
-  .tag-add-row input {
-    flex: 1; font-size: 11px; padding: 4px 8px; border: 1px solid var(--border);
-    border-radius: 6px; outline: none; background: var(--surface); color: var(--text);
-    font-family: var(--font-body);
-  }
-  .tag-add-row button {
-    font-size: 11px; padding: 4px 8px; border: none; border-radius: 6px;
-    background: var(--accent); color: #fff; cursor: pointer; font-weight: 600;
-  }
+  .role-technical { background: var(--cyan-bg); color: var(--cyan); }
+  .role-pm { background: var(--orange-bg); color: var(--orange); }
+  .role-analyst { background: var(--green-bg); color: var(--green); }
 
   /* Row actions */
   .row-actions { opacity: 0; transition: opacity 0.15s; white-space: nowrap; display: flex; gap: 2px; }
@@ -598,6 +571,11 @@
     font-size: 14px; padding: 0 2px; line-height: 1; transition: color 0.15s;
   }
   .owner-chip button:hover { color: var(--red); }
+  .role-select {
+    font-size: 10px; padding: 1px 4px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text-secondary); cursor: pointer;
+    font-family: var(--font-body); outline: none;
+  }
   .add-owner-row { display: flex; gap: 5px; margin-top: 8px; }
   .add-owner-row input {
     flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 8px;
@@ -912,10 +890,6 @@
     <select class="filter-select" id="reviewFilter" onchange="setReviewFilter(this.value)"></select>
   </div>
   <div class="filter-group">
-    <div class="filter-label">Tag</div>
-    <select class="filter-select" id="tagFilter" onchange="setTagFilter(this.value)"></select>
-  </div>
-  <div class="filter-group">
     <div class="filter-label">Search</div>
     <div class="search-wrap">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -938,7 +912,6 @@
           <th onclick="sortBy('analystOwner')">Customer <span class="sort-arrow" id="sort-analystOwner"></span></th>
           <th onclick="sortBy('status')">Status <span class="sort-arrow" id="sort-status"></span></th>
           <th onclick="sortBy('goal')">End of Week Goal <span class="sort-arrow" id="sort-goal"></span></th>
-          <th>Tags</th>
           <th style="width:60px"></th>
         </tr>
       </thead>
@@ -979,10 +952,6 @@
         <label>Customer Owner(s)</label>
         <div id="fAnalystOwnerWrap" class="modal-ms-wrap"></div>
       </div>
-    </div>
-    <div class="form-group">
-      <label>Tags</label>
-      <div id="fTagsWrap" class="modal-ms-wrap"></div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -1136,16 +1105,17 @@ let collapsedSections = {};
 
 const STATUS_ORDER = ['Not Started', 'Scoping', 'Build', 'Dev', 'In Progress', 'Testing', 'Wrap-Up', 'Done'];
 const PRIORITY_ORDER = ['High', 'Medium', 'Low', ''];
-const TAG_KEY = 'nlhs_cp_tags';
-let TAG_OPTIONS = JSON.parse(localStorage.getItem(TAG_KEY) || '["Technical","PM"]');
-function saveTagOptions() { localStorage.setItem(TAG_KEY, JSON.stringify(TAG_OPTIONS)); }
-function tagClass(tag) {
-  const t = tag.toLowerCase();
-  if (t === 'technical') return 'tag-technical';
-  if (t === 'pm' || t === 'project manager') return 'tag-pm';
-  return 'tag-default';
+const OWNER_ROLES_KEY = 'nlhs_cp_owner_roles';
+const ROLE_OPTIONS = ['Technical', 'PM', 'Analyst'];
+let ownerRoles = JSON.parse(localStorage.getItem(OWNER_ROLES_KEY) || '{}');
+function saveOwnerRoles() { localStorage.setItem(OWNER_ROLES_KEY, JSON.stringify(ownerRoles)); }
+function roleClass(role) {
+  const r = (role||'').toLowerCase();
+  if (r === 'technical') return 'role-technical';
+  if (r === 'pm') return 'role-pm';
+  if (r === 'analyst') return 'role-analyst';
+  return '';
 }
-let activeTagFilter = 'All';
 const API_URL = '/api/tasks';
 const OWNERS_KEY = 'nlhs_cp_owners';
 const THEME_KEY = 'nlhs_cp_theme';
@@ -1367,16 +1337,12 @@ function buildFilters() {
   buildFilterSelect(document.getElementById('statusFilter'), ['All', ...STATUS_ORDER], activeStatusFilter);
   buildFilterSelect(document.getElementById('priorityFilter'), ['All', 'High', 'Medium', 'Low', 'None'], activePriorityFilter);
   buildFilterSelect(document.getElementById('reviewFilter'), ['All', 'Reviewed', 'Unreviewed'], activeReviewFilter);
-
-  const allTags = ['All', ...new Set(tasks.flatMap(t => t.tags || []))];
-  buildFilterSelect(document.getElementById('tagFilter'), allTags, activeTagFilter);
 }
 function setOwnerFilter(o) { activeOwnerFilter = o; buildFilters(); renderTable(); }
 function setCustomerFilter(o) { activeCustomerFilter = o; buildFilters(); renderTable(); }
 function setStatusFilter(s) { activeStatusFilter = s; buildFilters(); renderTable(); }
 function setPriorityFilter(p) { activePriorityFilter = p; buildFilters(); renderTable(); }
 function setReviewFilter(r) { activeReviewFilter = r; buildFilters(); renderTable(); }
-function setTagFilter(t) { activeTagFilter = t; buildFilters(); renderTable(); }
 
 // ── Quick Add ──
 function populateQuickAdd() {
@@ -1506,7 +1472,6 @@ function renderTable() {
   let filtered = tasks.filter(t => {
     if (activeOwnerFilter !== 'All' && !getOwnerList(t.epicOwner).includes(activeOwnerFilter)) return false;
     if (activeCustomerFilter !== 'All' && !getOwnerList(t.analystOwner).includes(activeCustomerFilter)) return false;
-    if (activeTagFilter !== 'All' && !(t.tags || []).includes(activeTagFilter)) return false;
     if (activeStatusFilter !== 'All' && t.status !== activeStatusFilter) return false;
     if (activePriorityFilter !== 'All') {
       if (activePriorityFilter === 'None' && t.priority) return false;
@@ -1515,7 +1480,7 @@ function renderTable() {
     if (activeReviewFilter === 'Reviewed' && !t.reviewed) return false;
     if (activeReviewFilter === 'Unreviewed' && t.reviewed) return false;
     if (search) {
-      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'') + (t.priority||'') + (t.tags||[]).join(' ')).toLowerCase();
+      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'') + (t.priority||'')).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
@@ -1567,7 +1532,7 @@ function renderTable() {
       const isCollapsed = collapsedSections[t.section];
       const count = sectionCounts[t.section] || 0;
       html += `<tr class="section-row" onclick="toggleSection('${t.section.replace(/'/g,"\\'")}')">
-        <td colspan="11">
+        <td colspan="10">
           <span class="section-toggle ${isCollapsed ? 'collapsed' : ''}">\u25BC</span>${esc(t.section)}
           <span class="section-task-count">(${count} task${count !== 1 ? 's' : ''})</span>
           <span class="section-edit-btn" onclick="event.stopPropagation(); renameSection('${t.section.replace(/'/g,"\\'")}')" title="Rename section">&#9998;</span>
@@ -1605,7 +1570,10 @@ function renderTable() {
       <td class="slg" onclick="inlineEditSlg(${realIdx}, this)" title="Click to edit SLG">${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
       <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'epic', this, event)">
         <div class="owner-pills" title="Click to change Epic Owner">
-          ${getOwnerList(t.epicOwner).length ? getOwnerList(t.epicOwner).map(o => `<span class="owner-pill epic">${esc(o)}</span>`).join('') : '<span class="owner-pills-empty">--</span>'}
+          ${getOwnerList(t.epicOwner).length ? getOwnerList(t.epicOwner).map(o => {
+            const role = ownerRoles[o] || '';
+            return `<span class="owner-pill epic">${esc(o)}${role ? `<span class="owner-role ${roleClass(role)}">${esc(role)}</span>` : ''}</span>`;
+          }).join('') : '<span class="owner-pills-empty">--</span>'}
         </div>
       </td>
       <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'customer', this, event)">
@@ -1627,11 +1595,6 @@ function renderTable() {
             <button onclick="submitInlineUpdate(${realIdx})">Save</button>
             <button class="cancel-inline" onclick="hideInlineUpdate(${realIdx})">X</button>
           </div>
-        </div>
-      </td>
-      <td class="tag-cell" style="position:relative" onclick="toggleTagDropdown(${realIdx}, this, event)">
-        <div class="tag-chips">
-          ${(t.tags||[]).length ? t.tags.map(tg => `<span class="tag-chip ${tagClass(tg)}">${esc(tg)}</span>`).join('') : '<span class="owner-pills-empty">--</span>'}
         </div>
       </td>
       <td>
@@ -1694,7 +1657,10 @@ function toggleOwnerDropdown(idx, type, td, ev) {
       const pills = td.querySelector('.owner-pills');
       const newSel = getOwnerList(tasks[idx][field]);
       pills.innerHTML = newSel.length
-        ? newSel.map(s => `<span class="owner-pill ${type}">${esc(s)}</span>`).join('')
+        ? newSel.map(s => {
+            const r = type === 'epic' ? (ownerRoles[s] || '') : '';
+            return `<span class="owner-pill ${type}">${esc(s)}${r ? `<span class="owner-role ${roleClass(r)}">${esc(r)}</span>` : ''}</span>`;
+          }).join('')
         : '<span class="owner-pills-empty">--</span>';
     };
     lbl.appendChild(cb);
@@ -1707,60 +1673,6 @@ function toggleOwnerDropdown(idx, type, td, ev) {
   setTimeout(() => document.addEventListener('click', closeHandler), 0);
 }
 
-// ── Tag Helpers ──
-function toggleTagDropdown(idx, td, ev) {
-  ev.stopPropagation();
-  const existing = td.querySelector('.tag-dropdown');
-  if (existing) { existing.remove(); return; }
-  document.querySelectorAll('.ms-dropdown, .tag-dropdown').forEach(d => d.remove());
-  isEditingInline = true;
-  const current = tasks[idx].tags || [];
-  const dd = document.createElement('div');
-  dd.className = 'tag-dropdown';
-  dd.onclick = (e) => e.stopPropagation();
-  TAG_OPTIONS.forEach(tag => {
-    const lbl = document.createElement('label');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = current.includes(tag);
-    cb.onchange = () => {
-      if (cb.checked) { tasks[idx].tags.push(tag); } else { tasks[idx].tags = tasks[idx].tags.filter(t => t !== tag); }
-      save();
-      const chips = td.querySelector('.tag-chips');
-      chips.innerHTML = tasks[idx].tags.length
-        ? tasks[idx].tags.map(tg => `<span class="tag-chip ${tagClass(tg)}">${esc(tg)}</span>`).join('')
-        : '<span class="owner-pills-empty">--</span>';
-    };
-    lbl.appendChild(cb);
-    lbl.appendChild(document.createTextNode(tag));
-    dd.appendChild(lbl);
-  });
-  // Add new tag row
-  const addRow = document.createElement('div');
-  addRow.className = 'tag-add-row';
-  addRow.innerHTML = '<input type="text" placeholder="New tag...">';
-  const addBtn = document.createElement('button');
-  addBtn.textContent = '+';
-  addBtn.onclick = () => {
-    const input = addRow.querySelector('input');
-    const val = input.value.trim();
-    if (val && !TAG_OPTIONS.includes(val)) {
-      TAG_OPTIONS.push(val);
-      saveTagOptions();
-    }
-    if (val && !tasks[idx].tags.includes(val)) {
-      tasks[idx].tags.push(val);
-      save();
-    }
-    dd.remove(); isEditingInline = false; renderTable();
-  };
-  addRow.querySelector('input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
-  addRow.appendChild(addBtn);
-  dd.appendChild(addRow);
-  td.appendChild(dd);
-  const closeHandler = () => { dd.remove(); isEditingInline = false; document.removeEventListener('click', closeHandler); };
-  setTimeout(() => document.addEventListener('click', closeHandler), 0);
-}
 function toggleReviewed(idx, val) { tasks[idx].reviewed = val; save(); renderTable(); }
 function quickDelete(idx) {
   if (!confirm('Delete "' + tasks[idx].task + '"?')) return;
@@ -1779,9 +1691,6 @@ function populateModalDropdowns() {
   const custOpts = ['TBD', 'N/A', 'All', ...owners.customer];
   const custWrap = document.getElementById('fAnalystOwnerWrap');
   custWrap.innerHTML = custOpts.map(o => `<label><input type="checkbox" value="${esc(o)}" class="fCustCb"> ${esc(o)}</label>`).join('');
-
-  const tagsWrap = document.getElementById('fTagsWrap');
-  tagsWrap.innerHTML = TAG_OPTIONS.map(t => `<label><input type="checkbox" value="${esc(t)}" class="fTagCb"> ${esc(t)}</label>`).join('');
 }
 
 function renderUpdatesLog(updates) {
@@ -1821,7 +1730,7 @@ function openAddModal() {
   document.getElementById('fTask').value = '';
   document.getElementById('fSlg').value = '';
   document.getElementById('fDescription').value = '';
-  document.querySelectorAll('.fEpicCb, .fCustCb, .fTagCb').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.fEpicCb, .fCustCb').forEach(cb => cb.checked = false);
   document.getElementById('fStatus').value = 'Not Started';
   document.getElementById('fPriority').value = '';
   document.getElementById('fDueDate').value = '';
@@ -1847,8 +1756,6 @@ function openEditModal(idx) {
   document.querySelectorAll('.fEpicCb').forEach(cb => cb.checked = epicList.includes(cb.value));
   const custList = getOwnerList(t.analystOwner);
   document.querySelectorAll('.fCustCb').forEach(cb => cb.checked = custList.includes(cb.value));
-  const tagList = t.tags || [];
-  document.querySelectorAll('.fTagCb').forEach(cb => cb.checked = tagList.includes(cb.value));
   document.getElementById('fStatus').value = t.status || 'Not Started';
   document.getElementById('fPriority').value = t.priority || '';
   document.getElementById('fDueDate').value = t.dueDate || '';
@@ -1888,7 +1795,6 @@ function saveTask() {
     description: document.getElementById('fDescription').value.trim(),
     epicOwner: [...document.querySelectorAll('.fEpicCb:checked')].map(cb => cb.value).join(', '),
     analystOwner: [...document.querySelectorAll('.fCustCb:checked')].map(cb => cb.value).join(', '),
-    tags: [...document.querySelectorAll('.fTagCb:checked')].map(cb => cb.value),
     status: newStatus,
     priority: document.getElementById('fPriority').value,
     dueDate: document.getElementById('fDueDate').value,
@@ -1921,12 +1827,23 @@ function switchTab(tab, el) {
 }
 
 function renderOwnerLists() {
-  document.getElementById('epicOwnerList').innerHTML = owners.epic.map(o =>
-    `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('epic','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
-  ).join('');
+  document.getElementById('epicOwnerList').innerHTML = owners.epic.map(o => {
+    const role = ownerRoles[o] || '';
+    const opts = ROLE_OPTIONS.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('');
+    return `<div class="owner-chip">${esc(o)}
+      <select class="role-select" onchange="setOwnerRole('${o.replace(/'/g,"\\'")}', this.value)">
+        <option value="" ${!role ? 'selected' : ''}>No role</option>${opts}
+      </select>
+      <button onclick="removeOwner('epic','${o.replace(/'/g,"\\'")}')">&times;</button></div>`;
+  }).join('');
   document.getElementById('customerOwnerList').innerHTML = owners.customer.map(o =>
     `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('customer','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
   ).join('');
+}
+function setOwnerRole(name, role) {
+  if (role) { ownerRoles[name] = role; } else { delete ownerRoles[name]; }
+  saveOwnerRoles();
+  renderTable();
 }
 
 function addOwner(type) {
