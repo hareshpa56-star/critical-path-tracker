@@ -223,7 +223,8 @@
     background: none; border: none; color: var(--text-muted); cursor: pointer;
     padding: 4px 6px; font-size: 13px; border-radius: 6px; transition: all 0.15s;
   }
-  .check-actions button:hover { color: var(--red); background: var(--red-bg); }
+  .check-actions button:hover { color: var(--accent); background: var(--accent-light); }
+  .check-actions button:last-child:hover { color: var(--red); background: var(--red-bg); }
 
   /* Add item row */
   .add-item-row {
@@ -524,13 +525,14 @@ function render() {
       html += `<div class="check-item ${item.done ? 'done' : ''}">
         <input type="checkbox" class="check-box" ${item.done ? 'checked' : ''} onchange="toggleItem(${idx}, this.checked)">
         <div class="check-body">
-          <div class="check-text">${esc(item.text)}</div>
+          <div class="check-text" ondblclick="editItemText(${idx}, this)">${esc(item.text)}</div>
           <div class="check-meta">
             ${linkedTask ? `<a class="check-link" href="/critical_path.html" title="${esc(linkedTask.task)}">${esc(linkedTask.task)}</a>` : ''}
             ${item.createdDate ? `<span class="check-date">${new Date(item.createdDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
           </div>
         </div>
         <div class="check-actions">
+          <button onclick="editItemText(${idx})" title="Edit">&#9998;</button>
           <button onclick="deleteItem(${idx})" title="Delete">&#10005;</button>
         </div>
       </div>`;
@@ -560,6 +562,14 @@ function toggleItem(idx, checked) {
   render();
 }
 
+function editItemText(idx, el) {
+  const current = checklistItems[idx].text;
+  const newText = prompt('Edit checklist item:', current);
+  if (newText === null || newText.trim() === '' || newText.trim() === current) return;
+  checklistItems[idx].text = newText.trim();
+  save();
+  render();
+}
 function deleteItem(idx) {
   if (!confirm('Delete this checklist item?')) return;
   checklistItems.splice(idx, 1);
