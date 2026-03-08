@@ -201,6 +201,13 @@
   }
 
   /* Stats */
+  .viewer-banner {
+    display: flex; align-items: center; gap: 12px; padding: 8px 32px;
+    background: #fffbeb; border-bottom: 1px solid #fde68a; color: #92400e;
+    font-size: 12px; font-weight: 600;
+  }
+  .viewer-hint { font-weight: 400; opacity: 0.7; }
+  [data-theme="dark"] .viewer-banner { background: #451a03; border-color: #78350f; color: #fbbf24; }
   .stats-bar { display: flex; gap: 10px; padding: 24px 32px 12px; flex-wrap: wrap; position: relative; z-index: 1; }
   .stat-card {
     background: var(--surface-glass);
@@ -873,21 +880,25 @@
     <button class="btn btn-dark-toggle" onclick="toggleDarkMode()" id="darkToggle" title="Toggle dark mode">&#9790;</button>
     <a href="/dashboard.html" class="btn btn-ghost" title="Analytics Dashboard">&#9636; Dashboard</a>
     <a href="/checklist.html" class="btn btn-ghost" title="Analyst Checklists">&#9745; Analyst Checklists</a>
-    <button class="btn btn-ghost" onclick="openSettingsModal()" title="Manage Owners">&#9881; Owners</button>
+    <button class="btn btn-ghost editor-only" onclick="openSettingsModal()" title="Manage Owners">&#9881; Owners</button>
     <button class="btn btn-history" onclick="openHistoryModal()" title="View weekly history">&#9776; History</button>
-    <button class="btn btn-reset" onclick="resetWeek()" title="Archive goals and reset for new week">&#8634; Reset Week</button>
+    <button class="btn btn-reset editor-only" onclick="resetWeek()" title="Archive goals and reset for new week">&#8634; Reset Week</button>
     <button class="btn btn-print" onclick="printView()" title="Print meeting view">&#9113; Print</button>
     <button class="btn btn-email" onclick="sendEmail()">&#9993; Email</button>
-    <button class="btn btn-primary" onclick="openAddModal()">+ Add Task</button>
-    <button class="btn btn-icon btn-ghost" onclick="fullBackup()" title="Download full backup (tasks + checklists)">&#8681;</button>
-    <button class="btn btn-icon btn-ghost" onclick="importData()" title="Import JSON">&#8679;</button>
+    <button class="btn btn-primary editor-only" onclick="openAddModal()">+ Add Task</button>
+    <button class="btn btn-icon btn-ghost editor-only" onclick="fullBackup()" title="Download full backup (tasks + checklists)">&#8681;</button>
+    <button class="btn btn-icon btn-ghost editor-only" onclick="importData()" title="Import JSON">&#8679;</button>
     <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
   </div>
 </div>
 
+<div id="viewerBanner" class="viewer-banner" style="display:none">
+  <span>&#128274; View-only mode</span>
+  <span class="viewer-hint">Sign in with editor password to make changes</span>
+</div>
 <div class="stats-bar" id="statsBar"></div>
 
-<div class="quick-add-bar">
+<div class="quick-add-bar editor-only">
   <input type="text" class="qa-task" id="qaTask" placeholder="Task name...">
   <input type="text" class="qa-desc" id="qaDesc" placeholder="Description...">
   <select id="qaSection"><option value="">Section...</option></select>
@@ -1149,11 +1160,15 @@ const THEME_KEY = 'nlhs_cp_theme';
 const TOKEN_KEY = 'nlhs_cp_token';
 const COLLAPSED_KEY = 'nlhs_cp_collapsed';
 
+const ROLE_KEY = 'nlhs_cp_role';
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
+let userRole = localStorage.getItem(ROLE_KEY) || 'editor';
 let saveTimer = null;
 let searchTimer = null;
 let APP_PASSWORD_REQUIRED = false;
 let isEditingInline = false;
+
+function isViewer() { return userRole === 'viewer'; }
 
 function normalizeTask(t) {
   if (!t.id) t.id = crypto.randomUUID();
@@ -1229,7 +1244,9 @@ async function doLogin() {
     const data = await res.json();
     if (data.ok) {
       authToken = data.token;
+      userRole = data.role || 'editor';
       localStorage.setItem(TOKEN_KEY, authToken);
+      localStorage.setItem(ROLE_KEY, userRole);
       document.getElementById('loginError').style.display = 'none';
       document.getElementById('loginPassword').value = '';
       hideLogin();
@@ -1253,6 +1270,12 @@ async function checkAuth() {
     if (data.required) {
       const testRes = await fetch(API_URL, { headers: authHeaders() });
       if (testRes.status === 401) { showLogin(); return false; }
+      // Fetch role for existing token
+      try {
+        const roleRes = await fetch('/api/role', { headers: authHeaders() });
+        const roleData = await roleRes.json();
+        if (roleData.role) { userRole = roleData.role; localStorage.setItem(ROLE_KEY, userRole); }
+      } catch(e) {}
     }
   } catch(e) {}
   return true;
@@ -1281,8 +1304,21 @@ async function init() {
   populateQuickAdd();
   renderStats();
   renderTable();
+  applyViewerMode();
   document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
   setInterval(autoRefresh, 15000);
+}
+
+function applyViewerMode() {
+  const editEls = document.querySelectorAll('.editor-only');
+  const viewBanner = document.getElementById('viewerBanner');
+  if (isViewer()) {
+    editEls.forEach(el => el.style.display = 'none');
+    if (viewBanner) viewBanner.style.display = 'flex';
+  } else {
+    editEls.forEach(el => el.style.display = '');
+    if (viewBanner) viewBanner.style.display = 'none';
+  }
 }
 
 function syncOwnersFromTasks() {
@@ -1575,63 +1611,64 @@ function renderTable() {
     const dueSoonTask = isDueSoon(t);
     const dueDateClass = overdueTask ? 'overdue' : dueSoonTask ? 'due-soon' : 'on-track';
 
-    html += `<tr class="${t.flagged ? 'flagged' : ''}" ondblclick="openEditModal(${realIdx})">
+    const v = isViewer();
+    html += `<tr class="${t.flagged ? 'flagged' : ''}" ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
       <td style="text-align:center">
-        <button class="flag-btn ${t.flagged ? 'active' : ''}" onclick="toggleFlag(${realIdx})" title="${t.flagged ? 'Remove flag' : 'Flag for discussion'}">&#9873;</button>
-        <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed">
+        ${!v ? `<button class="flag-btn ${t.flagged ? 'active' : ''}" onclick="toggleFlag(${realIdx})" title="${t.flagged ? 'Remove flag' : 'Flag for discussion'}">&#9873;</button>` : (t.flagged ? '<span class="flag-btn active">&#9873;</span>' : '')}
+        <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed" ${v ? 'disabled' : ''}>
       </td>
       <td class="task-name">${esc(t.task)}<div class="task-desc">${esc(t.description)}</div></td>
       <td>
-        <select class="quick-select select-priority-${t.priority ? t.priority.toLowerCase() : 'none'}" onchange="quickPriority(${realIdx}, this.value)" title="Change Priority">
+        ${!v ? `<select class="quick-select select-priority-${t.priority ? t.priority.toLowerCase() : 'none'}" onchange="quickPriority(${realIdx}, this.value)" title="Change Priority">
           <option value="" ${!t.priority ? 'selected' : ''}>--</option>
           <option value="High" ${'High' === t.priority ? 'selected' : ''}>High</option>
           <option value="Medium" ${'Medium' === t.priority ? 'selected' : ''}>Medium</option>
           <option value="Low" ${'Low' === t.priority ? 'selected' : ''}>Low</option>
-        </select>
+        </select>` : `<span class="priority-badge priority-${(t.priority||'').toLowerCase()}">${esc(t.priority) || '--'}</span>`}
       </td>
       <td>
-        <div class="due-date ${dueDateClass} due-date-clickable" onclick="inlineEditDueDate(${realIdx}, this)" title="Click to change date">
+        <div class="due-date ${dueDateClass}" ${!v ? `onclick="inlineEditDueDate(${realIdx}, this)" style="cursor:pointer" title="Click to change date"` : ''}>
           ${t.dueDate ? fmtDueDate(t.dueDate) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}
           ${overdueTask ? '<span class="overdue-flag">Overdue</span>' : ''}
         </div>
       </td>
-      <td class="slg" onclick="inlineEditSlg(${realIdx}, this)" title="Click to edit SLG">${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
-      <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'epic', this, event)">
-        <div class="owner-pills" title="Click to change Epic Owner">
+      <td class="slg" ${!v ? `onclick="inlineEditSlg(${realIdx}, this)" title="Click to edit SLG"` : ''}>${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
+      <td class="owner-cell" ${!v ? `onclick="toggleOwnerDropdown(${realIdx}, 'epic', this, event)"` : ''}>
+        <div class="owner-pills" ${!v ? 'title="Click to change Epic Owner"' : ''}>
           ${getOwnerList(t.epicOwner).length ? getOwnerList(t.epicOwner).map(o => {
             const role = (t.epicOwnerRoles || {})[o] || '';
             return `<span class="owner-pill epic">${esc(o)}${role ? `<span class="owner-role ${roleClass(role)}">${esc(role)}</span>` : ''}</span>`;
           }).join('') : '<span class="owner-pills-empty">--</span>'}
         </div>
       </td>
-      <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'customer', this, event)">
-        <div class="owner-pills" title="Click to change Customer Owner">
+      <td class="owner-cell" ${!v ? `onclick="toggleOwnerDropdown(${realIdx}, 'customer', this, event)"` : ''}>
+        <div class="owner-pills" ${!v ? 'title="Click to change Customer Owner"' : ''}>
           ${getOwnerList(t.analystOwner).length ? getOwnerList(t.analystOwner).map(o => `<span class="owner-pill customer">${esc(o)}</span>`).join('') : '<span class="owner-pills-empty">--</span>'}
         </div>
       </td>
       <td>
-        <select class="quick-select select-${statusClass(t.status)}" onchange="quickStatus(${realIdx}, this.value)">
+        ${!v ? `<select class="quick-select select-${statusClass(t.status)}" onchange="quickStatus(${realIdx}, this.value)">
           ${STATUS_ORDER.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
-        </select>
+        </select>` : `<span class="status-badge select-${statusClass(t.status)}" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(t.status)}</span>`}
       </td>
       <td class="goal">
-        <div class="goal-display" onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal">${esc(t.goal) || '<span style="color:var(--text-muted);font-size:11px;font-style:italic">Click to set goal...</span>'}</div>
+        <div class="goal-display" ${!v ? `onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal"` : ''}>${esc(t.goal) || '<span style="color:var(--text-muted);font-size:11px;font-style:italic">${v ? "--" : "Click to set goal..."}</span>'}</div>
         ${(() => { const lg = getLastArchivedGoal(t); return lg ? `<div class="last-week-goal"><div class="lwg-label">Last Week (${esc(lg.week)})</div>${esc(lg.text)}</div>` : ''; })()}
-        <div id="inlineUpdate-${realIdx}" style="display:none">
+        ${!v ? `<div id="inlineUpdate-${realIdx}" style="display:none">
           <div class="inline-update-row">
             <input type="text" id="inlineUpdateInput-${realIdx}" placeholder="Quick update..." onkeydown="if(event.key==='Enter')submitInlineUpdate(${realIdx});if(event.key==='Escape')hideInlineUpdate(${realIdx})">
             <button onclick="submitInlineUpdate(${realIdx})">Save</button>
             <button class="cancel-inline" onclick="hideInlineUpdate(${realIdx})">X</button>
           </div>
-        </div>
+        </div>` : ''}
       </td>
-      <td>
+      ${!v ? `<td>
         <div class="row-actions">
           <button onclick="showInlineUpdate(${realIdx}, event)" title="Quick update">+</button>
           <button onclick="openEditModal(${realIdx})" title="Edit">&#9998;</button>
           <button class="del-btn" onclick="quickDelete(${realIdx})" title="Delete">&#10005;</button>
         </div>
-      </td>
+      </td>` : ''}
     </tr>`;
   });
 

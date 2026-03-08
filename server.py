@@ -16,39 +16,53 @@ from datetime import datetime
 PORT = int(os.environ.get('PORT', 8080))
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 APP_PASSWORD = os.environ.get('APP_PASSWORD', '')
+VIEW_PASSWORD = os.environ.get('VIEW_PASSWORD', '')
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'critical_path_data.json')
 CHECKLIST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'checklist_data.json')
 LOCK = threading.Lock()
 
-# Simple token store: token -> expiry timestamp
+# Token store: token -> { "expiry": timestamp, "role": "editor" | "viewer" }
 TOKENS = {}
 TOKEN_LIFETIME = 86400 * 7  # 7 days
 
 
-def generate_token():
+def generate_token(role='editor'):
     token = secrets.token_hex(32)
-    TOKENS[token] = time.time() + TOKEN_LIFETIME
+    TOKENS[token] = {"expiry": time.time() + TOKEN_LIFETIME, "role": role}
     return token
 
 
-def is_valid_token(token):
+def get_token_info(token):
     if not token:
-        return False
-    expiry = TOKENS.get(token)
-    if not expiry:
-        return False
-    if time.time() > expiry:
+        return None
+    info = TOKENS.get(token)
+    if not info:
+        return None
+    if time.time() > info["expiry"]:
         del TOKENS[token]
-        return False
-    return True
+        return None
+    return info
+
+
+def is_valid_token(token):
+    return get_token_info(token) is not None
 
 
 def check_auth(handler):
     """Returns True if request is authorized. If APP_PASSWORD is not set, always returns True."""
-    if not APP_PASSWORD:
+    if not APP_PASSWORD and not VIEW_PASSWORD:
         return True
     token = handler.headers.get('X-Auth-Token', '')
     return is_valid_token(token)
+
+
+def check_editor(handler):
+    """Returns True if request has editor-level access."""
+    if not APP_PASSWORD and not VIEW_PASSWORD:
+        return True
+    token = handler.headers.get('X-Auth-Token', '')
+    info = get_token_info(token)
+    return info is not None and info["role"] == "editor"
 
 
 # ── Storage: Postgres if DATABASE_URL is set, otherwise local JSON file ──
@@ -159,7 +173,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.path = '/critical_path.html'
             return super().do_GET()
         elif self.path == '/api/auth-required':
-            self.send_json(200, {"required": bool(APP_PASSWORD)})
+            self.send_json(200, {"required": bool(APP_PASSWORD) or bool(VIEW_PASSWORD)})
+        elif self.path == '/api/role':
+            token = self.headers.get('X-Auth-Token', '')
+            info = get_token_info(token)
+            if info:
+                self.send_json(200, {"role": info["role"]})
+            else:
+                self.send_json(200, {"role": "none"})
         elif self.path == '/api/tasks':
             if not check_auth(self):
                 return self.send_unauthorized()
@@ -198,17 +219,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             try:
                 payload = json.loads(body)
                 password = payload.get('password', '')
-                if password == APP_PASSWORD:
-                    token = generate_token()
-                    self.send_json(200, {"ok": True, "token": token})
+                if APP_PASSWORD and password == APP_PASSWORD:
+                    token = generate_token('editor')
+                    self.send_json(200, {"ok": True, "token": token, "role": "editor"})
+                elif VIEW_PASSWORD and password == VIEW_PASSWORD:
+                    token = generate_token('viewer')
+                    self.send_json(200, {"ok": True, "token": token, "role": "viewer"})
                 else:
                     self.send_json(403, {"ok": False, "error": "Wrong password"})
             except json.JSONDecodeError:
                 self.send_json(400, {"error": "Invalid JSON"})
 
         elif self.path == '/api/tasks':
-            if not check_auth(self):
-                return self.send_unauthorized()
+            if not check_editor(self):
+                return self.send_json(403, {"error": "View-only access. Editing requires editor password."})
             try:
                 tasks = json.loads(body)
                 with LOCK:
@@ -218,8 +242,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_json(400, {"error": "Invalid JSON"})
 
         elif self.path == '/api/checklists':
-            if not check_auth(self):
-                return self.send_unauthorized()
+            if not check_editor(self):
+                return self.send_json(403, {"error": "View-only access. Editing requires editor password."})
             try:
                 items = json.loads(body)
                 with LOCK:
@@ -229,8 +253,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_json(400, {"error": "Invalid JSON"})
 
         elif self.path == '/api/restore':
-            if not check_auth(self):
-                return self.send_unauthorized()
+            if not check_editor(self):
+                return self.send_json(403, {"error": "View-only access. Editing requires editor password."})
             try:
                 backup = json.loads(body)
                 with LOCK:
@@ -267,8 +291,13 @@ if __name__ == '__main__':
             print("No data file found. It will be created on first save.")
         print(f"Storage: Local file ({DATA_FILE})")
 
-    if APP_PASSWORD:
-        print(f"Auth:    Password required (set via APP_PASSWORD)")
+    if APP_PASSWORD or VIEW_PASSWORD:
+        parts = []
+        if APP_PASSWORD:
+            parts.append("Editor (APP_PASSWORD)")
+        if VIEW_PASSWORD:
+            parts.append("Viewer (VIEW_PASSWORD)")
+        print(f"Auth:    {', '.join(parts)}")
     else:
         print(f"Auth:    None (open access)")
 

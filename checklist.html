@@ -316,8 +316,8 @@
     <button class="btn btn-dark-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle dark mode">&#9790;</button>
     <a href="/critical_path.html" class="btn btn-ghost">&#9664; Tracker</a>
     <a href="/dashboard.html" class="btn btn-ghost">&#9636; Dashboard</a>
-    <button class="btn btn-reset" onclick="resetAllChecklists()" title="Uncheck all items for new week">&#8634; Reset Week</button>
-    <button class="btn" onclick="openAddAnalyst()" title="Add a new analyst section">+ Analyst</button>
+    <button class="btn btn-reset editor-only" onclick="resetAllChecklists()" title="Uncheck all items for new week">&#8634; Reset Week</button>
+    <button class="btn editor-only" onclick="openAddAnalyst()" title="Add a new analyst section">+ Analyst</button>
   </div>
 </div>
 
@@ -352,11 +352,15 @@ const STATUS_COLORS = {
   'In Progress':'#f97316','Testing':'#3b82f6','Wrap-Up':'#22c55e','Done':'#10b981'
 };
 
+const ROLE_KEY = 'nlhs_cp_role';
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
+let userRole = localStorage.getItem(ROLE_KEY) || 'editor';
 let checklistItems = [];
 let cpTasks = [];
 let saveTimer = null;
 let APP_PASSWORD_REQUIRED = false;
+
+function isViewer() { return userRole === 'viewer'; }
 
 // ── Theme ──
 function toggleTheme() {
@@ -433,7 +437,23 @@ async function init() {
   const [cl, tasks] = await Promise.all([fetchChecklist(), fetchTasks()]);
   checklistItems = cl || [];
   cpTasks = tasks || [];
+  // Check role from server
+  try {
+    const roleRes = await fetch('/api/role', { headers: authHeaders() });
+    const roleData = await roleRes.json();
+    if (roleData.role) { userRole = roleData.role; localStorage.setItem(ROLE_KEY, userRole); }
+  } catch(e) {}
   render();
+  applyViewerMode();
+}
+
+function applyViewerMode() {
+  const editEls = document.querySelectorAll('.editor-only');
+  if (isViewer()) {
+    editEls.forEach(el => el.style.display = 'none');
+  } else {
+    editEls.forEach(el => el.style.display = '');
+  }
 }
 
 // ── Get analysts (syncs with Customer Owners from Settings) ──
@@ -528,35 +548,38 @@ function render() {
     if (items.length === 0) {
       html += `<div class="empty-state">No items yet. Add one below.</div>`;
     }
+    const v = isViewer();
     items.forEach(item => {
       const idx = checklistItems.indexOf(item);
       const linkedTask = item.linkedTaskId ? cpTasks.find(t => t.id === item.linkedTaskId) : null;
       html += `<div class="check-item ${item.done ? 'done' : ''}">
-        <input type="checkbox" class="check-box" ${item.done ? 'checked' : ''} onchange="toggleItem(${idx}, this.checked)">
+        <input type="checkbox" class="check-box" ${item.done ? 'checked' : ''} onchange="toggleItem(${idx}, this.checked)" ${v ? 'disabled' : ''}>
         <div class="check-body">
-          <div class="check-text" ondblclick="editItemText(${idx}, this)">${esc(item.text)}</div>
+          <div class="check-text" ${!v ? `ondblclick="editItemText(${idx}, this)"` : ''}>${esc(item.text)}</div>
           <div class="check-meta">
             ${linkedTask ? `<a class="check-link" href="/critical_path.html" title="${esc(linkedTask.task)}">${esc(linkedTask.task)}</a>` : ''}
             ${item.createdDate ? `<span class="check-date">${new Date(item.createdDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
           </div>
         </div>
-        <div class="check-actions">
+        ${!v ? `<div class="check-actions">
           <button onclick="editItemText(${idx})" title="Edit">&#9998;</button>
           <button onclick="deleteItem(${idx})" title="Delete">&#10005;</button>
-        </div>
+        </div>` : ''}
       </div>`;
     });
     html += `</div>`;
 
-    // Add item row
-    html += `<div class="add-item-row">
-      <input type="text" id="addInput-${esc(analyst).replace(/\s/g,'_')}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem('${analyst.replace(/'/g,"\\'")}')">
-      <select id="addLink-${esc(analyst).replace(/\s/g,'_')}">
-        <option value="">Link task...</option>
-        ${taskOpts}
-      </select>
-      <button onclick="addItem('${analyst.replace(/'/g,"\\'")}')">+ Add</button>
-    </div>`;
+    // Add item row (editors only)
+    if (!v) {
+      html += `<div class="add-item-row">
+        <input type="text" id="addInput-${esc(analyst).replace(/\s/g,'_')}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem('${analyst.replace(/'/g,"\\'")}')">
+        <select id="addLink-${esc(analyst).replace(/\s/g,'_')}">
+          <option value="">Link task...</option>
+          ${taskOpts}
+        </select>
+        <button onclick="addItem('${analyst.replace(/'/g,"\\'")}')">+ Add</button>
+      </div>`;
+    }
 
     html += `</div>`;
   });
