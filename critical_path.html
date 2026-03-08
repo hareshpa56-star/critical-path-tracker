@@ -440,15 +440,25 @@
     position: absolute; top: 100%; left: 0; z-index: 100;
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    min-width: 180px; max-height: 220px; overflow-y: auto; padding: 4px 0;
+    min-width: 220px; max-height: 260px; overflow-y: auto; padding: 4px 0;
+  }
+  .ms-dropdown-row {
+    display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 2px 0;
   }
   .ms-dropdown label {
     display: flex; align-items: center; gap: 8px; padding: 6px 12px;
     font-size: 12px; cursor: pointer; transition: background 0.1s;
     text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
+    flex: 1;
   }
-  .ms-dropdown label:hover { background: var(--accent-light); }
+  .ms-dropdown-row:hover { background: var(--accent-light); }
+  .ms-dropdown label:hover { background: none; }
   .ms-dropdown input[type="checkbox"] { accent-color: var(--accent); }
+  .ms-role-select {
+    font-size: 10px; padding: 2px 4px; border: 1px solid var(--border);
+    border-radius: 4px; background: var(--surface); color: var(--text);
+    cursor: pointer; flex-shrink: 0;
+  }
 
   /* Owner role badges */
   .owner-role {
@@ -571,11 +581,6 @@
     font-size: 14px; padding: 0 2px; line-height: 1; transition: color 0.15s;
   }
   .owner-chip button:hover { color: var(--red); }
-  .role-select {
-    font-size: 10px; padding: 1px 4px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--surface); color: var(--text-secondary); cursor: pointer;
-    font-family: var(--font-body); outline: none;
-  }
   .add-owner-row { display: flex; gap: 5px; margin-top: 8px; }
   .add-owner-row input {
     flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 8px;
@@ -1105,10 +1110,7 @@ let collapsedSections = {};
 
 const STATUS_ORDER = ['Not Started', 'Scoping', 'Build', 'Dev', 'In Progress', 'Testing', 'Wrap-Up', 'Done'];
 const PRIORITY_ORDER = ['High', 'Medium', 'Low', ''];
-const OWNER_ROLES_KEY = 'nlhs_cp_owner_roles';
 const ROLE_OPTIONS = ['Technical', 'PM', 'Analyst'];
-let ownerRoles = JSON.parse(localStorage.getItem(OWNER_ROLES_KEY) || '{}');
-function saveOwnerRoles() { localStorage.setItem(OWNER_ROLES_KEY, JSON.stringify(ownerRoles)); }
 function roleClass(role) {
   const r = (role||'').toLowerCase();
   if (r === 'technical') return 'role-technical';
@@ -1137,6 +1139,7 @@ function normalizeTask(t) {
   if (!t.dueDate) t.dueDate = '';
   if (t.flagged === undefined) t.flagged = false;
   if (!t.tags) t.tags = [];
+  if (!t.epicOwnerRoles) t.epicOwnerRoles = {};
   return t;
 }
 
@@ -1571,7 +1574,7 @@ function renderTable() {
       <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'epic', this, event)">
         <div class="owner-pills" title="Click to change Epic Owner">
           ${getOwnerList(t.epicOwner).length ? getOwnerList(t.epicOwner).map(o => {
-            const role = ownerRoles[o] || '';
+            const role = (t.epicOwnerRoles || {})[o] || '';
             return `<span class="owner-pill epic">${esc(o)}${role ? `<span class="owner-role ${roleClass(role)}">${esc(role)}</span>` : ''}</span>`;
           }).join('') : '<span class="owner-pills-empty">--</span>'}
         </div>
@@ -1629,6 +1632,18 @@ function setOwnerValue(idx, field, selectedArr) {
   tasks[idx][field] = selectedArr.join(', ');
   save(); renderTable();
 }
+function refreshOwnerPills(td, idx, type) {
+  const field = type === 'epic' ? 'epicOwner' : 'analystOwner';
+  const pills = td.querySelector('.owner-pills');
+  const newSel = getOwnerList(tasks[idx][field]);
+  pills.innerHTML = newSel.length
+    ? newSel.map(s => {
+        const r = type === 'epic' ? ((tasks[idx].epicOwnerRoles || {})[s] || '') : '';
+        return `<span class="owner-pill ${type}">${esc(s)}${r ? `<span class="owner-role ${roleClass(r)}">${esc(r)}</span>` : ''}</span>`;
+      }).join('')
+    : '<span class="owner-pills-empty">--</span>';
+}
+
 function toggleOwnerDropdown(idx, type, td, ev) {
   ev.stopPropagation();
   const existing = td.querySelector('.ms-dropdown');
@@ -1644,6 +1659,8 @@ function toggleOwnerDropdown(idx, type, td, ev) {
   dd.className = 'ms-dropdown';
   dd.onclick = (e) => e.stopPropagation();
   uniqueOpts.forEach(o => {
+    const row = document.createElement('div');
+    row.className = 'ms-dropdown-row';
     const lbl = document.createElement('label');
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -1652,20 +1669,37 @@ function toggleOwnerDropdown(idx, type, td, ev) {
       let sel = getOwnerList(tasks[idx][field]);
       if (cb.checked) { sel.push(o); } else { sel = sel.filter(s => s !== o); }
       tasks[idx][field] = sel.join(', ');
+      // Clean up roles for removed owners
+      if (!cb.checked && tasks[idx].epicOwnerRoles) { delete tasks[idx].epicOwnerRoles[o]; }
       save();
-      // Update pills display without full re-render
-      const pills = td.querySelector('.owner-pills');
-      const newSel = getOwnerList(tasks[idx][field]);
-      pills.innerHTML = newSel.length
-        ? newSel.map(s => {
-            const r = type === 'epic' ? (ownerRoles[s] || '') : '';
-            return `<span class="owner-pill ${type}">${esc(s)}${r ? `<span class="owner-role ${roleClass(r)}">${esc(r)}</span>` : ''}</span>`;
-          }).join('')
-        : '<span class="owner-pills-empty">--</span>';
+      refreshOwnerPills(td, idx, type);
+      // Show/hide role select when checked/unchecked
+      const roleEl = row.querySelector('.ms-role-select');
+      if (roleEl) roleEl.style.display = cb.checked ? '' : 'none';
     };
     lbl.appendChild(cb);
     lbl.appendChild(document.createTextNode(o));
-    dd.appendChild(lbl);
+    row.appendChild(lbl);
+
+    // Add role dropdown for Epic owners
+    if (type === 'epic') {
+      const roleSel = document.createElement('select');
+      roleSel.className = 'ms-role-select';
+      roleSel.style.display = cb.checked ? '' : 'none';
+      roleSel.innerHTML = '<option value="">Role</option>' + ROLE_OPTIONS.map(r =>
+        `<option value="${r}" ${((tasks[idx].epicOwnerRoles || {})[o] || '') === r ? 'selected' : ''}>${r}</option>`
+      ).join('');
+      roleSel.onclick = (e) => e.stopPropagation();
+      roleSel.onchange = () => {
+        if (!tasks[idx].epicOwnerRoles) tasks[idx].epicOwnerRoles = {};
+        if (roleSel.value) { tasks[idx].epicOwnerRoles[o] = roleSel.value; }
+        else { delete tasks[idx].epicOwnerRoles[o]; }
+        save();
+        refreshOwnerPills(td, idx, type);
+      };
+      row.appendChild(roleSel);
+    }
+    dd.appendChild(row);
   });
   td.style.position = 'relative';
   td.appendChild(dd);
@@ -1827,23 +1861,12 @@ function switchTab(tab, el) {
 }
 
 function renderOwnerLists() {
-  document.getElementById('epicOwnerList').innerHTML = owners.epic.map(o => {
-    const role = ownerRoles[o] || '';
-    const opts = ROLE_OPTIONS.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('');
-    return `<div class="owner-chip">${esc(o)}
-      <select class="role-select" onchange="setOwnerRole('${o.replace(/'/g,"\\'")}', this.value)">
-        <option value="" ${!role ? 'selected' : ''}>No role</option>${opts}
-      </select>
-      <button onclick="removeOwner('epic','${o.replace(/'/g,"\\'")}')">&times;</button></div>`;
-  }).join('');
+  document.getElementById('epicOwnerList').innerHTML = owners.epic.map(o =>
+    `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('epic','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
+  ).join('');
   document.getElementById('customerOwnerList').innerHTML = owners.customer.map(o =>
     `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('customer','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
   ).join('');
-}
-function setOwnerRole(name, role) {
-  if (role) { ownerRoles[name] = role; } else { delete ownerRoles[name]; }
-  saveOwnerRoles();
-  renderTable();
 }
 
 function addOwner(type) {
