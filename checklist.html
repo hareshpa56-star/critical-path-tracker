@@ -436,11 +436,20 @@ async function init() {
   render();
 }
 
-// ── Get analysts ──
+// ── Get analysts (syncs with Customer Owners from Settings) ──
 function getAnalysts() {
   const fromChecklist = checklistItems.map(i => i.analyst);
-  const fromTasks = cpTasks.map(t => t.analystOwner).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All');
-  return [...new Set([...fromChecklist, ...fromTasks])].sort();
+  // Pull from Customer Owners in localStorage (same list as tracker Settings)
+  let fromSettings = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem('nlhs_cp_owners') || '{}');
+    if (saved.customer) fromSettings = saved.customer;
+  } catch(e) {}
+  // Also pull from task data, splitting comma-separated owners
+  const fromTasks = cpTasks.flatMap(t =>
+    (t.analystOwner || '').split(',').map(s => s.trim())
+  ).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All');
+  return [...new Set([...fromSettings, ...fromChecklist, ...fromTasks])].sort();
 }
 
 // ── Get linked critical path tasks for an analyst ──
