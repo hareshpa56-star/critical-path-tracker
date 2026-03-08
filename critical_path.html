@@ -1685,7 +1685,7 @@ function renderTable() {
         </select>` : `<span class="status-badge select-${statusClass(t.status)}" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(t.status)}</span>`}
       </td>
       <td class="goal">
-        <div class="goal-display" ${!v ? `onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal"` : ''}>${esc(t.goal) || '<span style="color:var(--text-muted);font-size:11px;font-style:italic">${v ? "--" : "Click to set goal..."}</span>'}</div>
+        <div class="goal-display" ${!v ? `onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal"` : ''}>${esc(t.goal) || `<span style="color:var(--text-muted);font-size:11px;font-style:italic">${v ? '--' : 'Click to set goal...'}</span>`}</div>
         ${(() => { const lg = getLastArchivedGoal(t); return lg ? `<div class="last-week-goal"><div class="lwg-label">Last Week (${esc(lg.week)})</div>${esc(lg.text)}</div>` : ''; })()}
         ${!v ? `<div id="inlineUpdate-${realIdx}" style="display:none">
           <div class="inline-update-row">
