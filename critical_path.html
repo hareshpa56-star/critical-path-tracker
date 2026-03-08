@@ -18,7 +18,7 @@
     --border-hover: #c4bfb3;
     --text: #1c1917;
     --text-secondary: #57534e;
-    --text-muted: #a8a29e;
+    --text-muted: #78716c;
     --accent: #2563eb;
     --accent-light: #eff4ff;
     --accent-hover: #1d4ed8;
@@ -56,7 +56,7 @@
     --border-hover: #3d3d50;
     --text: #ececf1;
     --text-secondary: #a1a1b5;
-    --text-muted: #5c5c72;
+    --text-muted: #8888a0;
     --accent: #5b8af5;
     --accent-light: #151b30;
     --accent-hover: #7ba3ff;
@@ -375,7 +375,7 @@
   }
   tbody tr.section-row:hover .section-edit-btn { opacity: 1; }
   .section-edit-btn:hover { color: var(--accent); }
-  tbody td { padding: 10px 16px; font-size: 13px; vertical-align: top; }
+  tbody td { padding: 8px 14px; font-size: 13px; vertical-align: top; }
   td.task-name {
     font-weight: 700; color: var(--text);
     font-family: var(--font-display); letter-spacing: -0.2px;
@@ -713,9 +713,11 @@
   @media print {
     body { background: #fff !important; }
     body::before { display: none; }
-    .header, .quick-add-bar, .filters, .row-actions, .quick-owner,
+    .header, .quick-add-bar, .filters, .toolbar-row, .filter-chips, .row-actions, .quick-owner,
     .quick-status, .quick-priority, .reviewed-check, .btn,
-    .sync-indicator, .header-right { display: none !important; }
+    .sync-indicator, .header-right, .more-metrics-btn, .stats-secondary,
+    .row-action-menu-wrap, .compact-toggle-btn, .clear-all-btn, .result-count,
+    .goal-more-link, .lwg-toggle, .lwg-content { display: none !important; }
     .table-wrap { padding: 0 !important; }
     .table-container {
       border: 1px solid #ccc !important; border-radius: 0 !important;
@@ -853,6 +855,156 @@
     background: var(--surface2); color: var(--text); font-family: var(--font-body); outline: none;
   }
   .history-filter select:focus { border-color: var(--accent); }
+
+  /* === UI OVERHAUL ADDITIONS === */
+
+  /* #1 Two-row toolbar */
+  .toolbar-row {
+    display: flex; gap: 8px; padding: 6px 32px; align-items: center;
+    position: relative; z-index: 1; flex-wrap: wrap;
+  }
+  .toolbar-row.quick-add-row { padding-top: 12px; }
+  .toolbar-row.filter-row { padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  /* #2 KPI collapsible */
+  .stats-primary { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stats-secondary {
+    display: none; gap: 10px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .stats-secondary.open { display: flex; }
+  .more-metrics-btn {
+    background: none; border: 1px solid var(--border); border-radius: 20px;
+    padding: 4px 14px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; font-family: var(--font-body); transition: all 0.15s;
+    align-self: center;
+  }
+  .more-metrics-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* #3 Higher contrast owner pills and status badges */
+  .owner-pill.epic { background: #dbeafe; color: #1e40af; }
+  .owner-pill.customer { background: #ede9fe; color: #5b21b6; }
+  [data-theme="dark"] .owner-pill.epic { background: #1e3a5f; color: #93bbfd; }
+  [data-theme="dark"] .owner-pill.customer { background: #2e1065; color: #c4b5fd; }
+
+  .quick-select { font-weight: 800; font-size: 11px; letter-spacing: 0.3px; }
+
+  /* #4 Compact/Expanded toggle */
+  .compact-view tbody td { padding: 4px 10px; }
+  .compact-view .task-desc { display: none !important; }
+  .compact-view .last-week-goal { display: none !important; }
+  .compact-view .goal-display { font-size: 12px; }
+  .compact-view .goal-text-clamp { -webkit-line-clamp: 1; }
+  .compact-toggle-btn {
+    padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-secondary); font-family: var(--font-body); transition: all 0.15s;
+  }
+  .compact-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .compact-toggle-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+  /* #5 Stronger status badge colors */
+  .select-status-not-started { background: #fecaca; color: #991b1b; font-weight: 800; }
+  .select-status-scoping { background: #fed7aa; color: #9a3412; font-weight: 800; }
+  .select-status-build { background: #fde68a; color: #92400e; font-weight: 800; }
+  .select-status-dev { background: #bfdbfe; color: #1e3a8a; font-weight: 800; }
+  .select-status-in-progress { background: #dbeafe; color: #1d4ed8; font-weight: 800; }
+  .select-status-testing { background: #e9d5ff; color: #6b21a8; font-weight: 800; }
+  .select-status-wrap-up { background: #bbf7d0; color: #166534; font-weight: 800; }
+  .select-status-done { background: #86efac; color: #14532d; font-weight: 800; }
+  [data-theme="dark"] .select-status-not-started { background: #450a0a; color: #fca5a5; }
+  [data-theme="dark"] .select-status-scoping { background: #431407; color: #fdba74; }
+  [data-theme="dark"] .select-status-build { background: #451a03; color: #fcd34d; }
+  [data-theme="dark"] .select-status-dev { background: #172554; color: #93c5fd; }
+  [data-theme="dark"] .select-status-in-progress { background: #1e3a5f; color: #93c5fd; }
+  [data-theme="dark"] .select-status-testing { background: #2e1065; color: #d8b4fe; }
+  [data-theme="dark"] .select-status-wrap-up { background: #052e16; color: #86efac; }
+  [data-theme="dark"] .select-status-done { background: #052e16; color: #4ade80; }
+
+  /* #6 Goal truncation with show more */
+  .goal-text-clamp {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; line-height: 1.5;
+  }
+  .goal-text-clamp.expanded { -webkit-line-clamp: unset; overflow: visible; }
+  .goal-more-link {
+    font-size: 10px; color: var(--accent); cursor: pointer; font-weight: 600;
+    margin-top: 2px; display: inline-block;
+  }
+  .goal-more-link:hover { text-decoration: underline; }
+
+  /* Last week goal as collapsible */
+  .lwg-toggle {
+    font-size: 10px; color: var(--orange); cursor: pointer; font-weight: 600;
+    margin-top: 4px; display: inline-block;
+  }
+  .lwg-toggle:hover { text-decoration: underline; }
+  .lwg-content { display: none; }
+  .lwg-content.open { display: block; }
+
+  /* #7 Sticky header with scrollable table */
+  .table-container {
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+  }
+
+  /* #8 Row action menu */
+  .row-action-menu-wrap { position: relative; display: inline-block; }
+  .row-action-trigger {
+    background: none; border: 1px solid transparent; color: var(--text-muted);
+    cursor: pointer; padding: 4px 8px; font-size: 16px; border-radius: 6px;
+    transition: all 0.15s; font-weight: 700; line-height: 1;
+  }
+  .row-action-trigger:hover { color: var(--accent); background: var(--accent-light); border-color: var(--border); }
+  .row-action-dropdown {
+    display: none; position: absolute; right: 0; top: 100%; z-index: 120;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: var(--shadow-md); min-width: 160px;
+    padding: 4px 0; margin-top: 2px;
+  }
+  .row-action-dropdown.open { display: block; }
+  .row-action-item {
+    display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+    font-size: 12px; color: var(--text-secondary); cursor: pointer;
+    transition: background 0.1s; border: none; background: none; width: 100%;
+    font-family: var(--font-body); font-weight: 500; text-align: left;
+  }
+  .row-action-item:hover { background: var(--accent-light); color: var(--accent); }
+  .row-action-item.danger:hover { background: var(--red-bg); color: var(--red); }
+  .row-action-item .rai-icon { width: 16px; text-align: center; font-size: 13px; }
+
+  /* #9 Priority left border */
+  tbody tr.priority-high { border-left: 3px solid var(--red); }
+  tbody tr.priority-medium { border-left: 3px solid var(--orange); }
+  tbody tr.priority-low { border-left: 3px solid #a8a29e; }
+  /* Flagged takes precedence over priority border */
+  tbody tr.flagged { border-left: 3px solid var(--red); }
+
+  /* #10 Filter chips and clear all */
+  .filter-toolbar { padding: 0 32px; position: relative; z-index: 1; }
+  .filter-chips {
+    display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 32px 0;
+    align-items: center; position: relative; z-index: 1;
+  }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 16px; font-size: 11px; font-weight: 600;
+    background: var(--accent-light); color: var(--accent); border: 1px solid rgba(37,99,235,0.2);
+  }
+  .filter-chip-x {
+    cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1;
+    opacity: 0.6; transition: opacity 0.15s;
+  }
+  .filter-chip-x:hover { opacity: 1; }
+  .clear-all-btn {
+    padding: 3px 12px; border-radius: 16px; font-size: 11px; font-weight: 600;
+    background: var(--red-bg); color: var(--red); border: 1px solid transparent;
+    cursor: pointer; font-family: var(--font-body); transition: all 0.15s;
+  }
+  .clear-all-btn:hover { background: var(--red); color: #fff; }
+  .result-count {
+    font-size: 11px; color: var(--text-muted); font-weight: 500;
+    padding: 0 4px;
+  }
 </style>
 </head>
 <body>
@@ -907,18 +1059,20 @@
 </div>
 <div class="stats-bar" id="statsBar"></div>
 
-<div class="quick-add-bar editor-only">
-  <input type="text" class="qa-task" id="qaTask" placeholder="Task name...">
-  <input type="text" class="qa-desc" id="qaDesc" placeholder="Description...">
-  <select id="qaSection"><option value="">Section...</option></select>
-  <select id="qaEpic"><option value="">Epic Owner...</option></select>
-  <select id="qaCustomer"><option value="">Customer...</option></select>
-  <select id="qaPriority"><option value="">Priority...</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
-  <input type="date" id="qaDueDate" title="Due date">
-  <button class="btn btn-primary" onclick="quickAdd()" style="padding:8px 18px">+ Quick Add</button>
+<!-- Quick Add Row -->
+<div class="toolbar-row quick-add-row editor-only">
+  <input type="text" class="qa-task" id="qaTask" placeholder="Task name..." style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);flex:2;min-width:140px">
+  <input type="text" class="qa-desc" id="qaDesc" placeholder="Description..." style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);flex:2;min-width:120px">
+  <select id="qaSection" style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);min-width:100px"><option value="">Section...</option></select>
+  <select id="qaEpic" style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);min-width:100px"><option value="">Epic Owner...</option></select>
+  <select id="qaCustomer" style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);min-width:100px"><option value="">Customer...</option></select>
+  <select id="qaPriority" style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);min-width:100px"><option value="">Priority...</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+  <input type="date" id="qaDueDate" title="Due date" style="padding:7px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body);min-width:130px">
+  <button class="btn btn-primary" onclick="quickAdd()" style="padding:7px 16px">+ Quick Add</button>
 </div>
 
-<div class="filters">
+<!-- Filters Row -->
+<div class="toolbar-row filter-row">
   <div class="filter-group">
     <div class="filter-label">Epic Owner</div>
     <select class="filter-select" id="ownerFilter" onchange="setOwnerFilter(this.value)"></select>
@@ -946,7 +1100,12 @@
       <input type="text" class="search-input" id="searchInput" placeholder="Search tasks..." oninput="debouncedSearch()">
     </div>
   </div>
+  <span class="result-count" id="resultCount"></span>
+  <button class="compact-toggle-btn" id="compactToggle" onclick="toggleCompactView()" title="Toggle compact/expanded view">Compact</button>
+  <button class="clear-all-btn" id="clearAllBtn" onclick="clearAllFilters()" style="display:none">Clear All</button>
 </div>
+<!-- Filter chips -->
+<div class="filter-chips" id="filterChips"></div>
 
 <div class="table-wrap">
   <div class="table-container">
@@ -1487,24 +1646,51 @@ function renderStats() {
   const wrapUp = tasks.filter(t => t.status === 'Wrap-Up').length;
   const reviewed = tasks.filter(t => t.reviewed).length;
   const overdue = tasks.filter(t => isOverdue(t)).length;
+  const dueSoon = tasks.filter(t => isDueSoon(t)).length;
   const highPriority = tasks.filter(t => t.priority === 'High').length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const pctColor = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--orange)' : 'var(--red)';
+  const atRisk = overdue + dueSoon;
+
+  // Due this week: tasks with dueDate within the current Mon-Fri
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now); monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); monday.setHours(0,0,0,0);
+  const friday = new Date(monday); friday.setDate(monday.getDate() + 4); friday.setHours(23,59,59,999);
+  const dueThisWeek = tasks.filter(t => {
+    if (!t.dueDate || t.status === 'Done') return false;
+    const d = new Date(t.dueDate + 'T12:00:00');
+    return d >= monday && d <= friday;
+  }).length;
+
+  const unreviewed = tasks.filter(t => !t.reviewed && t.status !== 'Done').length;
 
   document.getElementById('statsBar').innerHTML = `
-    <div class="stat-card animate-in"><div class="stat-value">${total}</div><div class="stat-label">Total Tasks</div></div>
-    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--green)">${done}</div><div class="stat-label">Done</div></div>
-    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--blue)">${testing}</div><div class="stat-label">Testing</div></div>
-    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--orange)">${active}</div><div class="stat-label">Active</div></div>
-    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--cyan)">${wrapUp}</div><div class="stat-label">Wrap-Up</div></div>
-    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${notStarted}</div><div class="stat-label">Not Started</div></div>
-    ${overdue > 0 ? `<div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${overdue}</div><div class="stat-label">Overdue</div></div>` : ''}
-    ${highPriority > 0 ? `<div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${highPriority}</div><div class="stat-label">High Priority</div></div>` : ''}
-    <div class="stat-card animate-in"><div class="stat-value" style="color:var(--accent)">${reviewed}<span style="font-size:16px;opacity:0.5">/${total}</span></div><div class="stat-label">Reviewed</div></div>
-    <div class="stat-card animate-in">
-      <div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Complete</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pctColor};color:${pctColor}"></div></div>
+    <div class="stats-primary">
+      <div class="stat-card animate-in"><div class="stat-value">${total}</div><div class="stat-label">Total Tasks</div></div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${atRisk}</div><div class="stat-label">At Risk</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">${overdue} overdue + ${dueSoon} due soon</div></div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--orange)">${dueThisWeek}</div><div class="stat-label">Due This Week</div></div>
+      <div class="stat-card animate-in">
+        <div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Done</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pctColor};color:${pctColor}"></div></div>
+      </div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--accent)">${unreviewed}</div><div class="stat-label">Unreviewed</div></div>
+      <button class="more-metrics-btn" onclick="toggleMoreMetrics(this)">More metrics &#9660;</button>
+    </div>
+    <div class="stats-secondary" id="moreMetrics">
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--green)">${done}</div><div class="stat-label">Done</div></div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--purple)">${testing}</div><div class="stat-label">Testing</div></div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--blue)">${active}</div><div class="stat-label">Active</div></div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--cyan)">${wrapUp}</div><div class="stat-label">Wrap-Up</div></div>
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${notStarted}</div><div class="stat-label">Not Started</div></div>
+      ${highPriority > 0 ? `<div class="stat-card animate-in"><div class="stat-value" style="color:var(--red)">${highPriority}</div><div class="stat-label">High Priority</div></div>` : ''}
+      <div class="stat-card animate-in"><div class="stat-value" style="color:var(--accent)">${reviewed}<span style="font-size:16px;opacity:0.5">/${total}</span></div><div class="stat-label">Reviewed</div></div>
     </div>`;
+}
+function toggleMoreMetrics(btn) {
+  const sec = document.getElementById('moreMetrics');
+  const isOpen = sec.classList.toggle('open');
+  btn.innerHTML = isOpen ? 'Less metrics &#9650;' : 'More metrics &#9660;';
 }
 
 // ── Helpers ──
@@ -1618,6 +1804,9 @@ function renderTable() {
     sectionCounts[t.section]++;
   });
 
+  // Update result count and filter chips (#10)
+  updateFilterChips(filtered.length, tasks.length);
+
   const tbody = document.getElementById('taskTable');
   let html = '';
   let lastSection = '';
@@ -1644,10 +1833,13 @@ function renderTable() {
     const dueSoonTask = isDueSoon(t);
     const dueDateClass = overdueTask ? 'overdue' : dueSoonTask ? 'due-soon' : 'on-track';
 
+    // Priority border class (#9) -- flagged class takes precedence via CSS
+    const prioClass = t.priority ? 'priority-' + t.priority.toLowerCase() : '';
+
     const v = isViewer();
-    html += `<tr class="${t.flagged ? 'flagged' : ''}" ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
+    html += `<tr class="${t.flagged ? 'flagged' : prioClass}" ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
       <td style="text-align:center">
-        ${!v ? `<button class="flag-btn ${t.flagged ? 'active' : ''}" onclick="toggleFlag(${realIdx})" title="${t.flagged ? 'Remove flag' : 'Flag for discussion'}">&#9873;</button>` : (t.flagged ? '<span class="flag-btn active">&#9873;</span>' : '')}
+        ${t.flagged ? '<span class="flag-btn active" style="opacity:1">&#9873;</span>' : ''}
         <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed" ${v ? 'disabled' : ''}>
       </td>
       <td class="task-name">${esc(t.task)}<div class="task-desc">${esc(t.description)}</div></td>
@@ -1682,11 +1874,21 @@ function renderTable() {
       <td>
         ${!v ? `<select class="quick-select select-${statusClass(t.status)}" onchange="quickStatus(${realIdx}, this.value)">
           ${STATUS_ORDER.map(s => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
-        </select>` : `<span class="status-badge select-${statusClass(t.status)}" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(t.status)}</span>`}
+        </select>` : `<span class="status-badge select-${statusClass(t.status)}" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:800">${esc(t.status)}</span>`}
       </td>
       <td class="goal">
-        <div class="goal-display" ${!v ? `onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal"` : ''}>${esc(t.goal) || `<span style="color:var(--text-muted);font-size:11px;font-style:italic">${v ? '--' : 'Click to set goal...'}</span>`}</div>
-        ${(() => { const lg = getLastArchivedGoal(t); return lg ? `<div class="last-week-goal"><div class="lwg-label">Last Week (${esc(lg.week)})</div>${esc(lg.text)}</div>` : ''; })()}
+        <div class="goal-display" ${!v ? `onclick="inlineEditGoal(${realIdx}, this)" title="Click to edit goal"` : ''}>
+          ${t.goal ? `<span class="goal-text-clamp" id="goalClamp-${realIdx}">${esc(t.goal)}</span>` : `<span style="color:var(--text-muted);font-size:11px;font-style:italic">${v ? '--' : 'Click to set goal...'}</span>`}
+        </div>
+        ${t.goal && t.goal.length > 120 ? `<span class="goal-more-link" onclick="event.stopPropagation();toggleGoalClamp(${realIdx})">more</span>` : ''}
+        ${(() => {
+          const lg = getLastArchivedGoal(t);
+          if (!lg) return '';
+          return `<span class="lwg-toggle" onclick="event.stopPropagation();toggleLwg(${realIdx})">Last week &#9660;</span>
+            <div class="lwg-content" id="lwg-${realIdx}">
+              <div class="last-week-goal"><div class="lwg-label">Last Week (${esc(lg.week)})</div>${esc(lg.text)}</div>
+            </div>`;
+        })()}
         ${!v ? `<div id="inlineUpdate-${realIdx}" style="display:none">
           <div class="inline-update-row">
             <input type="text" id="inlineUpdateInput-${realIdx}" placeholder="Quick update..." onkeydown="if(event.key==='Enter')submitInlineUpdate(${realIdx});if(event.key==='Escape')hideInlineUpdate(${realIdx})">
@@ -1697,9 +1899,15 @@ function renderTable() {
       </td>
       ${!v ? `<td>
         <div class="row-actions">
-          <button onclick="showInlineUpdate(${realIdx}, event)" title="Quick update">+</button>
-          <button onclick="openEditModal(${realIdx})" title="Edit">&#9998;</button>
-          <button class="del-btn" onclick="quickDelete(${realIdx})" title="Delete">&#10005;</button>
+          <div class="row-action-menu-wrap">
+            <button class="row-action-trigger" onclick="toggleRowMenu(${realIdx}, event)" title="Actions">&#8943;</button>
+            <div class="row-action-dropdown" id="rowMenu-${realIdx}">
+              <button class="row-action-item" onclick="toggleFlag(${realIdx});closeAllRowMenus()"><span class="rai-icon">&#9873;</span>${t.flagged ? 'Remove Flag' : 'Flag for Discussion'}</button>
+              <button class="row-action-item" onclick="showInlineUpdate(${realIdx}, event);closeAllRowMenus()"><span class="rai-icon">+</span>Quick Update</button>
+              <button class="row-action-item" onclick="openEditModal(${realIdx});closeAllRowMenus()"><span class="rai-icon">&#9998;</span>Edit Task</button>
+              <button class="row-action-item danger" onclick="quickDelete(${realIdx});closeAllRowMenus()"><span class="rai-icon">&#10005;</span>Delete</button>
+            </div>
+          </div>
         </div>
       </td>` : ''}
     </tr>`;
@@ -2336,6 +2544,90 @@ function submitInlineUpdate(idx) {
   if (!tasks[idx].updates) tasks[idx].updates = [];
   tasks[idx].updates.push({ text, date: new Date().toISOString() });
   save();
+  renderTable();
+}
+
+// ── Compact View Toggle (#4) ──
+function toggleCompactView() {
+  const table = document.querySelector('.table-container');
+  const btn = document.getElementById('compactToggle');
+  table.classList.toggle('compact-view');
+  const isCompact = table.classList.contains('compact-view');
+  btn.textContent = isCompact ? 'Expanded' : 'Compact';
+  btn.classList.toggle('active', isCompact);
+}
+
+// ── Goal Clamp Toggle (#6) ──
+function toggleGoalClamp(idx) {
+  const el = document.getElementById('goalClamp-' + idx);
+  if (!el) return;
+  el.classList.toggle('expanded');
+  const link = el.parentElement.parentElement.querySelector('.goal-more-link');
+  if (link) link.textContent = el.classList.contains('expanded') ? 'less' : 'more';
+}
+
+// ── Last Week Goal Toggle (#6) ──
+function toggleLwg(idx) {
+  const el = document.getElementById('lwg-' + idx);
+  if (!el) return;
+  el.classList.toggle('open');
+  const toggle = el.previousElementSibling;
+  if (toggle) toggle.innerHTML = el.classList.contains('open') ? 'Last week &#9650;' : 'Last week &#9660;';
+}
+
+// ── Row Action Menu (#8) ──
+function toggleRowMenu(idx, event) {
+  event.stopPropagation();
+  const menu = document.getElementById('rowMenu-' + idx);
+  const wasOpen = menu.classList.contains('open');
+  closeAllRowMenus();
+  if (!wasOpen) menu.classList.add('open');
+}
+function closeAllRowMenus() {
+  document.querySelectorAll('.row-action-dropdown.open').forEach(d => d.classList.remove('open'));
+}
+document.addEventListener('click', closeAllRowMenus);
+
+// ── Filter Chips & Clear All (#10) ──
+function updateFilterChips(showing, total) {
+  const chipsEl = document.getElementById('filterChips');
+  const clearBtn = document.getElementById('clearAllBtn');
+  const countEl = document.getElementById('resultCount');
+  const chips = [];
+  const anyFilter = activeOwnerFilter !== 'All' || activeCustomerFilter !== 'All' ||
+    activeStatusFilter !== 'All' || activePriorityFilter !== 'All' || activeReviewFilter !== 'All' ||
+    document.getElementById('searchInput').value.trim() !== '';
+
+  if (activeOwnerFilter !== 'All') chips.push({label: 'Epic Owner: ' + activeOwnerFilter, clear: () => setOwnerFilter('All')});
+  if (activeCustomerFilter !== 'All') chips.push({label: 'Customer: ' + activeCustomerFilter, clear: () => setCustomerFilter('All')});
+  if (activeStatusFilter !== 'All') chips.push({label: 'Status: ' + activeStatusFilter, clear: () => setStatusFilter('All')});
+  if (activePriorityFilter !== 'All') chips.push({label: 'Priority: ' + activePriorityFilter, clear: () => setPriorityFilter('All')});
+  if (activeReviewFilter !== 'All') chips.push({label: 'Review: ' + activeReviewFilter, clear: () => setReviewFilter('All')});
+  const searchVal = document.getElementById('searchInput').value.trim();
+  if (searchVal) chips.push({label: 'Search: "' + searchVal + '"', clear: () => { document.getElementById('searchInput').value = ''; renderTable(); }});
+
+  if (anyFilter) {
+    countEl.textContent = 'Showing ' + showing + ' of ' + total + ' tasks';
+    clearBtn.style.display = '';
+    chipsEl.innerHTML = chips.map((c, i) =>
+      `<span class="filter-chip">${esc(c.label)} <span class="filter-chip-x" onclick="filterChipActions[${i}]()">&times;</span></span>`
+    ).join('');
+    window.filterChipActions = chips.map(c => c.clear);
+  } else {
+    countEl.textContent = total + ' tasks';
+    clearBtn.style.display = 'none';
+    chipsEl.innerHTML = '';
+    window.filterChipActions = [];
+  }
+}
+function clearAllFilters() {
+  activeOwnerFilter = 'All';
+  activeCustomerFilter = 'All';
+  activeStatusFilter = 'All';
+  activePriorityFilter = 'All';
+  activeReviewFilter = 'All';
+  document.getElementById('searchInput').value = '';
+  buildFilters();
   renderTable();
 }
 
