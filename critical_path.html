@@ -320,6 +320,14 @@
   }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--hover-row); }
+  tbody tr.flagged { background: var(--red-bg); border-left: 3px solid var(--red); }
+  tbody tr.flagged:hover { background: #fde8e8; }
+  .flag-btn {
+    background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px;
+    border-radius: 4px; transition: all 0.15s; opacity: 0.3; line-height: 1;
+  }
+  .flag-btn:hover { opacity: 1; transform: scale(1.2); }
+  .flag-btn.active { opacity: 1; }
   tbody tr.section-row {
     background: var(--accent-light);
     border-bottom: 2px solid var(--accent);
@@ -1063,6 +1071,7 @@ function normalizeTask(t) {
   if (!t.slg) t.slg = '';
   if (!t.priority) t.priority = '';
   if (!t.dueDate) t.dueDate = '';
+  if (t.flagged === undefined) t.flagged = false;
   return t;
 }
 
@@ -1471,8 +1480,9 @@ function renderTable() {
     const dueSoonTask = isDueSoon(t);
     const dueDateClass = overdueTask ? 'overdue' : dueSoonTask ? 'due-soon' : 'on-track';
 
-    html += `<tr ondblclick="openEditModal(${realIdx})">
+    html += `<tr class="${t.flagged ? 'flagged' : ''}" ondblclick="openEditModal(${realIdx})">
       <td style="text-align:center">
+        <button class="flag-btn ${t.flagged ? 'active' : ''}" onclick="toggleFlag(${realIdx})" title="${t.flagged ? 'Remove flag' : 'Flag for discussion'}">&#9873;</button>
         <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed">
       </td>
       <td class="task-name">${esc(t.task)}<div class="task-desc">${esc(t.description)}</div></td>
@@ -1542,6 +1552,7 @@ function quickStatus(idx, val) {
   autoLogStatusChange(idx, oldStatus, val);
   save(); renderTable();
 }
+function toggleFlag(idx) { tasks[idx].flagged = !tasks[idx].flagged; save(); renderTable(); }
 function quickPriority(idx, val) { tasks[idx].priority = val; save(); renderTable(); }
 function quickEpicOwner(idx, val) { tasks[idx].epicOwner = val; save(); renderTable(); }
 function quickCustomerOwner(idx, val) { tasks[idx].analystOwner = val; save(); renderTable(); }
