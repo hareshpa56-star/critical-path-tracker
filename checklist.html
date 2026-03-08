@@ -169,10 +169,16 @@
   .analyst-linked {
     font-size: 11px; color: var(--text-muted); padding: 0 20px; margin-top: 12px;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    user-select: none; transition: color 0.15s;
   }
+  .analyst-linked:hover { color: var(--accent); }
+  .analyst-linked .toggle-arrow { font-size: 9px; transition: transform 0.2s; }
+  .analyst-linked .toggle-arrow.open { transform: rotate(90deg); }
   .linked-tasks {
     padding: 8px 20px 4px; display: flex; flex-wrap: wrap; gap: 6px;
   }
+  .linked-tasks.collapsed { display: none; }
   .linked-chip {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
@@ -221,10 +227,10 @@
 
   /* Add item row */
   .add-item-row {
-    display: flex; gap: 6px; padding: 8px 12px 12px; align-items: center;
+    display: flex; gap: 6px; padding: 8px 12px 12px; align-items: center; flex-wrap: wrap;
   }
   .add-item-row input {
-    flex: 1; padding: 8px 12px; font-size: 13px; border-radius: 8px;
+    flex: 1; min-width: 120px; padding: 8px 12px; font-size: 13px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--surface); color: var(--text);
     outline: none; font-family: var(--font-body); transition: all 0.2s;
   }
@@ -232,11 +238,11 @@
   .add-item-row select {
     padding: 8px 10px; font-size: 12px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--surface); color: var(--text);
-    font-family: var(--font-body); outline: none; max-width: 180px;
+    font-family: var(--font-body); outline: none; max-width: 160px; flex-shrink: 1; min-width: 0;
   }
   .add-item-row select:focus { border-color: var(--accent); }
   .add-item-row button {
-    padding: 8px 14px; font-size: 12px; border-radius: 8px; border: none;
+    padding: 8px 14px; font-size: 12px; border-radius: 8px; border: none; flex-shrink: 0; white-space: nowrap;
     background: var(--accent); color: #fff; cursor: pointer; font-weight: 700;
     font-family: var(--font-body); white-space: nowrap; transition: background 0.15s;
   }
@@ -441,6 +447,16 @@ function getLinkedTasks(analyst) {
   return cpTasks.filter(t => t.analystOwner === analyst && t.status !== 'Done');
 }
 
+function toggleLinked(analyst) {
+  const safeId = analyst.replace(/\s/g, '_').replace(/'/g, '');
+  const tasks = document.getElementById('linkedTasks-' + safeId);
+  const arrow = document.getElementById('linkedArrow-' + safeId);
+  if (tasks) {
+    tasks.classList.toggle('collapsed');
+    if (arrow) arrow.classList.toggle('open', !tasks.classList.contains('collapsed'));
+  }
+}
+
 // ── Render ──
 function render() {
   const analysts = getAnalysts();
@@ -479,8 +495,12 @@ function render() {
 
     // Linked critical path tasks
     if (linked.length > 0) {
-      html += `<div class="analyst-linked">Linked Critical Path Items</div>
-        <div class="linked-tasks">`;
+      const safeAnalyst = analyst.replace(/'/g,"\\'");
+      html += `<div class="analyst-linked" onclick="toggleLinked('${safeAnalyst}')">
+        <span class="toggle-arrow" id="linkedArrow-${esc(analyst).replace(/\s/g,'_')}">&#9654;</span>
+        Show Linked Critical Path Items (${linked.length})
+      </div>
+        <div class="linked-tasks collapsed" id="linkedTasks-${esc(analyst).replace(/\s/g,'_')}">`;
       linked.forEach(t => {
         const color = STATUS_COLORS[t.status] || '#666';
         html += `<a class="linked-chip" href="/critical_path.html" title="${esc(t.task)} - ${esc(t.status)}${t.goal ? '\nGoal: ' + t.goal : ''}">
