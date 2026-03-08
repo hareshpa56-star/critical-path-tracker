@@ -2007,11 +2007,10 @@ function sendEmail() {
   tasks.forEach(t => {
     if (t.section !== lastSection) {
       lastSection = t.section;
-      html += `<tr><td colspan="8" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:11px 18px;border-bottom:2px solid #2563eb;font-size:13px">${esc(t.section)}</td></tr>`;
+      html += `<tr><td colspan="7" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:11px 18px;border-bottom:2px solid #2563eb;font-size:13px">${esc(t.section)}</td></tr>`;
     }
     const sc = statusColors[t.status] || '#666';
     const sb = statusBg[t.status] || '#f5f5f5';
-    const lastUp = t.updates && t.updates.length ? t.updates[t.updates.length - 1] : null;
     const overdueFlag = isOverdue(t) ? ' <span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:3px">OVERDUE</span>' : '';
     const prioHtml = t.priority ? `<span style="background:${prioBg[t.priority]||'#f5f5f5'};color:${prioColors[t.priority]||'#666'};padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${esc(t.priority)}</span>` : '';
 
@@ -2025,9 +2024,6 @@ function sendEmail() {
       </td>
       <td style="padding:9px 6px;color:#57534e;font-size:12px;vertical-align:top">
         <span style="color:#2563eb">${esc(t.epicOwner)}</span> / <span style="color:#7c3aed">${esc(t.analystOwner)}</span>
-      </td>
-      <td style="padding:9px 6px;color:#57534e;font-size:12px;vertical-align:top;max-width:140px">
-        ${lastUp ? esc(lastUp.text) + '<br><span style="font-size:10px;color:#a8a29e">' + fmtDate(lastUp.date) + '</span>' : ''}
       </td>
       <td style="padding:9px 18px;color:#57534e;line-height:1.5;vertical-align:top">${esc(t.goal)}</td>
     </tr>`;
