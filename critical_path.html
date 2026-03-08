@@ -207,6 +207,14 @@
     font-size: 12px; font-weight: 600;
   }
   .viewer-hint { font-weight: 400; opacity: 0.7; }
+  .viewer-switch-btn {
+    margin-left: auto; padding: 4px 14px; font-size: 11px; font-weight: 700;
+    border: 1px solid #92400e; border-radius: 6px; background: transparent;
+    color: #92400e; cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .viewer-switch-btn:hover { background: #92400e; color: #fff; }
+  [data-theme="dark"] .viewer-switch-btn { border-color: #fbbf24; color: #fbbf24; }
+  [data-theme="dark"] .viewer-switch-btn:hover { background: #fbbf24; color: #451a03; }
   [data-theme="dark"] .viewer-banner { background: #451a03; border-color: #78350f; color: #fbbf24; }
   .stats-bar { display: flex; gap: 10px; padding: 24px 32px 12px; flex-wrap: wrap; position: relative; z-index: 1; }
   .stat-card {
@@ -894,7 +902,8 @@
 
 <div id="viewerBanner" class="viewer-banner" style="display:none">
   <span>&#128274; View-only mode</span>
-  <span class="viewer-hint">Sign in with editor password to make changes</span>
+  <span class="viewer-hint">You have read-only access</span>
+  <button class="viewer-switch-btn" onclick="switchToEditor()">Sign in as Editor</button>
 </div>
 <div class="stats-bar" id="statsBar"></div>
 
@@ -1319,6 +1328,30 @@ function applyViewerMode() {
     editEls.forEach(el => el.style.display = '');
     if (viewBanner) viewBanner.style.display = 'none';
   }
+}
+
+async function switchToEditor() {
+  const pw = prompt('Enter editor password:');
+  if (!pw) return;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.ok && data.role === 'editor') {
+      authToken = data.token;
+      userRole = 'editor';
+      localStorage.setItem(TOKEN_KEY, authToken);
+      localStorage.setItem(ROLE_KEY, userRole);
+      applyViewerMode();
+      renderTable();
+    } else if (data.ok && data.role === 'viewer') {
+      alert('That is the viewer password. Enter the editor password to make changes.');
+    } else {
+      alert('Incorrect password.');
+    }
+  } catch(e) { alert('Could not verify password.'); }
 }
 
 function syncOwnersFromTasks() {
