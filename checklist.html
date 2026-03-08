@@ -444,7 +444,10 @@ function getAnalysts() {
 
 // ── Get linked critical path tasks for an analyst ──
 function getLinkedTasks(analyst) {
-  return cpTasks.filter(t => t.analystOwner === analyst && t.status !== 'Done');
+  return cpTasks.filter(t => {
+    const owners = (t.analystOwner || '').split(',').map(s => s.trim());
+    return owners.includes(analyst) && t.status !== 'Done';
+  });
 }
 
 function toggleLinked(analyst) {

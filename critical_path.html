@@ -426,6 +426,67 @@
   .select-priority-low { background: var(--surface2); color: var(--text-muted); }
   .select-priority-none { background: transparent; color: var(--text-muted); font-weight: 500; font-size: 11px; }
 
+  /* Multi-select owner dropdown */
+  .owner-cell { position: relative; }
+  .owner-pills { display: flex; flex-wrap: wrap; gap: 3px; cursor: pointer; min-height: 24px; align-items: center; }
+  .owner-pill {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .owner-pill.epic { background: var(--blue-bg); color: var(--blue); }
+  .owner-pill.customer { background: var(--purple-bg); color: var(--purple); }
+  .owner-pills-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
+  .ms-dropdown {
+    position: absolute; top: 100%; left: 0; z-index: 100;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    min-width: 180px; max-height: 220px; overflow-y: auto; padding: 4px 0;
+  }
+  .ms-dropdown label {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    font-size: 12px; cursor: pointer; transition: background 0.1s;
+    text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
+  }
+  .ms-dropdown label:hover { background: var(--accent-light); }
+  .ms-dropdown input[type="checkbox"] { accent-color: var(--accent); }
+
+  /* Tags */
+  .tag-chips { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+  .tag-chip {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .tag-chip.tag-technical { background: var(--cyan-bg); color: var(--cyan); }
+  .tag-chip.tag-pm { background: var(--orange-bg); color: var(--orange); }
+  .tag-chip.tag-default { background: var(--surface2); color: var(--text-secondary); }
+  .tag-cell { cursor: pointer; min-width: 60px; }
+  .tag-cell:hover { background: var(--accent-light); border-radius: 6px; }
+  .tag-dropdown {
+    position: absolute; top: 100%; left: 0; z-index: 100;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    min-width: 200px; padding: 4px 0;
+  }
+  .tag-dropdown label {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    font-size: 12px; cursor: pointer; transition: background 0.1s;
+    text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
+  }
+  .tag-dropdown label:hover { background: var(--accent-light); }
+  .tag-add-row {
+    display: flex; gap: 4px; padding: 6px 12px; border-top: 1px solid var(--border);
+  }
+  .tag-add-row input {
+    flex: 1; font-size: 11px; padding: 4px 8px; border: 1px solid var(--border);
+    border-radius: 6px; outline: none; background: var(--surface); color: var(--text);
+    font-family: var(--font-body);
+  }
+  .tag-add-row button {
+    font-size: 11px; padding: 4px 8px; border: none; border-radius: 6px;
+    background: var(--accent); color: #fff; cursor: pointer; font-weight: 600;
+  }
+
   /* Row actions */
   .row-actions { opacity: 0; transition: opacity 0.15s; white-space: nowrap; display: flex; gap: 2px; }
   tbody tr:hover .row-actions { opacity: 1; }
@@ -483,6 +544,20 @@
     display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;
     padding-top: 16px; border-top: 1px solid var(--border);
   }
+
+  /* Modal multi-select */
+  .modal-ms-wrap {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 8px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--surface2);
+    min-height: 36px;
+  }
+  .modal-ms-wrap label {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; cursor: pointer; padding: 3px 8px; border-radius: 6px;
+    transition: background 0.1s; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text);
+  }
+  .modal-ms-wrap label:hover { background: var(--accent-light); }
+  .modal-ms-wrap input[type="checkbox"] { accent-color: var(--accent); }
 
   /* Updates log */
   .updates-log { max-height: 180px; overflow-y: auto; margin-top: 8px; }
@@ -837,6 +912,10 @@
     <select class="filter-select" id="reviewFilter" onchange="setReviewFilter(this.value)"></select>
   </div>
   <div class="filter-group">
+    <div class="filter-label">Tag</div>
+    <select class="filter-select" id="tagFilter" onchange="setTagFilter(this.value)"></select>
+  </div>
+  <div class="filter-group">
     <div class="filter-label">Search</div>
     <div class="search-wrap">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -859,6 +938,7 @@
           <th onclick="sortBy('analystOwner')">Customer <span class="sort-arrow" id="sort-analystOwner"></span></th>
           <th onclick="sortBy('status')">Status <span class="sort-arrow" id="sort-status"></span></th>
           <th onclick="sortBy('goal')">End of Week Goal <span class="sort-arrow" id="sort-goal"></span></th>
+          <th>Tags</th>
           <th style="width:60px"></th>
         </tr>
       </thead>
@@ -892,13 +972,17 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Epic Owner</label>
-        <select id="fEpicOwner"><option value="">-- Select --</option></select>
+        <label>Epic Owner(s)</label>
+        <div id="fEpicOwnerWrap" class="modal-ms-wrap"></div>
       </div>
       <div class="form-group">
-        <label>Customer Owner</label>
-        <select id="fAnalystOwner"><option value="">-- Select --</option></select>
+        <label>Customer Owner(s)</label>
+        <div id="fAnalystOwnerWrap" class="modal-ms-wrap"></div>
       </div>
+    </div>
+    <div class="form-group">
+      <label>Tags</label>
+      <div id="fTagsWrap" class="modal-ms-wrap"></div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -1052,6 +1136,16 @@ let collapsedSections = {};
 
 const STATUS_ORDER = ['Not Started', 'Scoping', 'Build', 'Dev', 'In Progress', 'Testing', 'Wrap-Up', 'Done'];
 const PRIORITY_ORDER = ['High', 'Medium', 'Low', ''];
+const TAG_KEY = 'nlhs_cp_tags';
+let TAG_OPTIONS = JSON.parse(localStorage.getItem(TAG_KEY) || '["Technical","PM"]');
+function saveTagOptions() { localStorage.setItem(TAG_KEY, JSON.stringify(TAG_OPTIONS)); }
+function tagClass(tag) {
+  const t = tag.toLowerCase();
+  if (t === 'technical') return 'tag-technical';
+  if (t === 'pm' || t === 'project manager') return 'tag-pm';
+  return 'tag-default';
+}
+let activeTagFilter = 'All';
 const API_URL = '/api/tasks';
 const OWNERS_KEY = 'nlhs_cp_owners';
 const THEME_KEY = 'nlhs_cp_theme';
@@ -1072,6 +1166,7 @@ function normalizeTask(t) {
   if (!t.priority) t.priority = '';
   if (!t.dueDate) t.dueDate = '';
   if (t.flagged === undefined) t.flagged = false;
+  if (!t.tags) t.tags = [];
   return t;
 }
 
@@ -1194,13 +1289,15 @@ async function init() {
 
 function syncOwnersFromTasks() {
   tasks.forEach(t => {
-    if (t.epicOwner) {
-      const name = t.epicOwner.split('/')[0].split('(')[0].trim();
+    getOwnerList(t.epicOwner).forEach(name => {
+      name = name.split('/')[0].split('(')[0].trim();
       if (name && !owners.epic.includes(name)) owners.epic.push(name);
-    }
-    if (t.analystOwner && t.analystOwner !== 'N/A' && t.analystOwner !== 'TBD' && t.analystOwner !== 'All') {
-      if (!owners.customer.includes(t.analystOwner)) owners.customer.push(t.analystOwner);
-    }
+    });
+    getOwnerList(t.analystOwner).forEach(name => {
+      if (name && name !== 'N/A' && name !== 'TBD' && name !== 'All' && !owners.customer.includes(name)) {
+        owners.customer.push(name);
+      }
+    });
   });
   saveOwners();
 }
@@ -1261,21 +1358,25 @@ function buildFilterSelect(el, options, activeVal) {
 }
 
 function buildFilters() {
-  const epicNames = ['All', ...new Set(tasks.map(t => t.epicOwner.split('/')[0].split('(')[0].trim()).filter(Boolean))];
+  const epicNames = ['All', ...new Set(tasks.flatMap(t => getOwnerList(t.epicOwner)).filter(Boolean))];
   buildFilterSelect(document.getElementById('ownerFilter'), epicNames, activeOwnerFilter);
 
-  const customerNames = ['All', ...new Set(tasks.map(t => t.analystOwner).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All'))];
+  const customerNames = ['All', ...new Set(tasks.flatMap(t => getOwnerList(t.analystOwner)).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All'))];
   buildFilterSelect(document.getElementById('customerFilter'), customerNames, activeCustomerFilter);
 
   buildFilterSelect(document.getElementById('statusFilter'), ['All', ...STATUS_ORDER], activeStatusFilter);
   buildFilterSelect(document.getElementById('priorityFilter'), ['All', 'High', 'Medium', 'Low', 'None'], activePriorityFilter);
   buildFilterSelect(document.getElementById('reviewFilter'), ['All', 'Reviewed', 'Unreviewed'], activeReviewFilter);
+
+  const allTags = ['All', ...new Set(tasks.flatMap(t => t.tags || []))];
+  buildFilterSelect(document.getElementById('tagFilter'), allTags, activeTagFilter);
 }
 function setOwnerFilter(o) { activeOwnerFilter = o; buildFilters(); renderTable(); }
 function setCustomerFilter(o) { activeCustomerFilter = o; buildFilters(); renderTable(); }
 function setStatusFilter(s) { activeStatusFilter = s; buildFilters(); renderTable(); }
 function setPriorityFilter(p) { activePriorityFilter = p; buildFilters(); renderTable(); }
 function setReviewFilter(r) { activeReviewFilter = r; buildFilters(); renderTable(); }
+function setTagFilter(t) { activeTagFilter = t; buildFilters(); renderTable(); }
 
 // ── Quick Add ──
 function populateQuickAdd() {
@@ -1403,8 +1504,9 @@ function renderTable() {
   if (isEditingInline) return;
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtered = tasks.filter(t => {
-    if (activeOwnerFilter !== 'All' && !t.epicOwner.includes(activeOwnerFilter)) return false;
-    if (activeCustomerFilter !== 'All' && t.analystOwner !== activeCustomerFilter) return false;
+    if (activeOwnerFilter !== 'All' && !getOwnerList(t.epicOwner).includes(activeOwnerFilter)) return false;
+    if (activeCustomerFilter !== 'All' && !getOwnerList(t.analystOwner).includes(activeCustomerFilter)) return false;
+    if (activeTagFilter !== 'All' && !(t.tags || []).includes(activeTagFilter)) return false;
     if (activeStatusFilter !== 'All' && t.status !== activeStatusFilter) return false;
     if (activePriorityFilter !== 'All') {
       if (activePriorityFilter === 'None' && t.priority) return false;
@@ -1413,7 +1515,7 @@ function renderTable() {
     if (activeReviewFilter === 'Reviewed' && !t.reviewed) return false;
     if (activeReviewFilter === 'Unreviewed' && t.reviewed) return false;
     if (search) {
-      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'') + (t.priority||'')).toLowerCase();
+      const hay = (t.task + t.description + t.epicOwner + t.analystOwner + t.goal + t.section + (t.slg||'') + (t.priority||'') + (t.tags||[]).join(' ')).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
@@ -1465,7 +1567,7 @@ function renderTable() {
       const isCollapsed = collapsedSections[t.section];
       const count = sectionCounts[t.section] || 0;
       html += `<tr class="section-row" onclick="toggleSection('${t.section.replace(/'/g,"\\'")}')">
-        <td colspan="10">
+        <td colspan="11">
           <span class="section-toggle ${isCollapsed ? 'collapsed' : ''}">\u25BC</span>${esc(t.section)}
           <span class="section-task-count">(${count} task${count !== 1 ? 's' : ''})</span>
           <span class="section-edit-btn" onclick="event.stopPropagation(); renameSection('${t.section.replace(/'/g,"\\'")}')" title="Rename section">&#9998;</span>
@@ -1501,20 +1603,15 @@ function renderTable() {
         </div>
       </td>
       <td class="slg" onclick="inlineEditSlg(${realIdx}, this)" title="Click to edit SLG">${t.slg ? fmtSlg(t.slg) : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">--</span>'}</td>
-      <td>
-        <select class="quick-select select-epic" onchange="quickEpicOwner(${realIdx}, this.value)" title="Change Epic Owner">
-          ${owners.epic.map(o => `<option value="${esc(o)}" ${t.epicOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
-          ${!owners.epic.includes(t.epicOwner) && t.epicOwner ? `<option value="${esc(t.epicOwner)}" selected>${esc(t.epicOwner)}</option>` : ''}
-        </select>
+      <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'epic', this, event)">
+        <div class="owner-pills" title="Click to change Epic Owner">
+          ${getOwnerList(t.epicOwner).length ? getOwnerList(t.epicOwner).map(o => `<span class="owner-pill epic">${esc(o)}</span>`).join('') : '<span class="owner-pills-empty">--</span>'}
+        </div>
       </td>
-      <td>
-        <select class="quick-select select-customer" onchange="quickCustomerOwner(${realIdx}, this.value)" title="Change Customer Owner">
-          <option value="TBD" ${t.analystOwner === 'TBD' ? 'selected' : ''}>TBD</option>
-          <option value="N/A" ${t.analystOwner === 'N/A' ? 'selected' : ''}>N/A</option>
-          <option value="All" ${t.analystOwner === 'All' ? 'selected' : ''}>All</option>
-          ${owners.customer.map(o => `<option value="${esc(o)}" ${t.analystOwner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
-          ${!owners.customer.includes(t.analystOwner) && !['TBD','N/A','All'].includes(t.analystOwner) && t.analystOwner ? `<option value="${esc(t.analystOwner)}" selected>${esc(t.analystOwner)}</option>` : ''}
-        </select>
+      <td class="owner-cell" onclick="toggleOwnerDropdown(${realIdx}, 'customer', this, event)">
+        <div class="owner-pills" title="Click to change Customer Owner">
+          ${getOwnerList(t.analystOwner).length ? getOwnerList(t.analystOwner).map(o => `<span class="owner-pill customer">${esc(o)}</span>`).join('') : '<span class="owner-pills-empty">--</span>'}
+        </div>
       </td>
       <td>
         <select class="quick-select select-${statusClass(t.status)}" onchange="quickStatus(${realIdx}, this.value)">
@@ -1530,6 +1627,11 @@ function renderTable() {
             <button onclick="submitInlineUpdate(${realIdx})">Save</button>
             <button class="cancel-inline" onclick="hideInlineUpdate(${realIdx})">X</button>
           </div>
+        </div>
+      </td>
+      <td class="tag-cell" style="position:relative" onclick="toggleTagDropdown(${realIdx}, this, event)">
+        <div class="tag-chips">
+          ${(t.tags||[]).length ? t.tags.map(tg => `<span class="tag-chip ${tagClass(tg)}">${esc(tg)}</span>`).join('') : '<span class="owner-pills-empty">--</span>'}
         </div>
       </td>
       <td>
@@ -1554,8 +1656,111 @@ function quickStatus(idx, val) {
 }
 function toggleFlag(idx) { tasks[idx].flagged = !tasks[idx].flagged; save(); renderTable(); }
 function quickPriority(idx, val) { tasks[idx].priority = val; save(); renderTable(); }
-function quickEpicOwner(idx, val) { tasks[idx].epicOwner = val; save(); renderTable(); }
-function quickCustomerOwner(idx, val) { tasks[idx].analystOwner = val; save(); renderTable(); }
+
+// ── Multi-select Owner Helpers ──
+function getOwnerList(val) {
+  if (!val) return [];
+  return val.split(',').map(s => s.trim()).filter(Boolean);
+}
+function setOwnerValue(idx, field, selectedArr) {
+  tasks[idx][field] = selectedArr.join(', ');
+  save(); renderTable();
+}
+function toggleOwnerDropdown(idx, type, td, ev) {
+  ev.stopPropagation();
+  const existing = td.querySelector('.ms-dropdown');
+  if (existing) { existing.remove(); return; }
+  // Close any other open dropdowns
+  document.querySelectorAll('.ms-dropdown, .tag-dropdown').forEach(d => d.remove());
+  isEditingInline = true;
+  const field = type === 'epic' ? 'epicOwner' : 'analystOwner';
+  const current = getOwnerList(tasks[idx][field]);
+  const options = type === 'epic' ? owners.epic : ['TBD', 'N/A', 'All', ...owners.customer];
+  const uniqueOpts = [...new Set([...options, ...current.filter(c => !options.includes(c))])];
+  const dd = document.createElement('div');
+  dd.className = 'ms-dropdown';
+  dd.onclick = (e) => e.stopPropagation();
+  uniqueOpts.forEach(o => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = current.includes(o);
+    cb.onchange = () => {
+      let sel = getOwnerList(tasks[idx][field]);
+      if (cb.checked) { sel.push(o); } else { sel = sel.filter(s => s !== o); }
+      tasks[idx][field] = sel.join(', ');
+      save();
+      // Update pills display without full re-render
+      const pills = td.querySelector('.owner-pills');
+      const newSel = getOwnerList(tasks[idx][field]);
+      pills.innerHTML = newSel.length
+        ? newSel.map(s => `<span class="owner-pill ${type}">${esc(s)}</span>`).join('')
+        : '<span class="owner-pills-empty">--</span>';
+    };
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(o));
+    dd.appendChild(lbl);
+  });
+  td.style.position = 'relative';
+  td.appendChild(dd);
+  const closeHandler = () => { dd.remove(); isEditingInline = false; document.removeEventListener('click', closeHandler); };
+  setTimeout(() => document.addEventListener('click', closeHandler), 0);
+}
+
+// ── Tag Helpers ──
+function toggleTagDropdown(idx, td, ev) {
+  ev.stopPropagation();
+  const existing = td.querySelector('.tag-dropdown');
+  if (existing) { existing.remove(); return; }
+  document.querySelectorAll('.ms-dropdown, .tag-dropdown').forEach(d => d.remove());
+  isEditingInline = true;
+  const current = tasks[idx].tags || [];
+  const dd = document.createElement('div');
+  dd.className = 'tag-dropdown';
+  dd.onclick = (e) => e.stopPropagation();
+  TAG_OPTIONS.forEach(tag => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = current.includes(tag);
+    cb.onchange = () => {
+      if (cb.checked) { tasks[idx].tags.push(tag); } else { tasks[idx].tags = tasks[idx].tags.filter(t => t !== tag); }
+      save();
+      const chips = td.querySelector('.tag-chips');
+      chips.innerHTML = tasks[idx].tags.length
+        ? tasks[idx].tags.map(tg => `<span class="tag-chip ${tagClass(tg)}">${esc(tg)}</span>`).join('')
+        : '<span class="owner-pills-empty">--</span>';
+    };
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(tag));
+    dd.appendChild(lbl);
+  });
+  // Add new tag row
+  const addRow = document.createElement('div');
+  addRow.className = 'tag-add-row';
+  addRow.innerHTML = '<input type="text" placeholder="New tag...">';
+  const addBtn = document.createElement('button');
+  addBtn.textContent = '+';
+  addBtn.onclick = () => {
+    const input = addRow.querySelector('input');
+    const val = input.value.trim();
+    if (val && !TAG_OPTIONS.includes(val)) {
+      TAG_OPTIONS.push(val);
+      saveTagOptions();
+    }
+    if (val && !tasks[idx].tags.includes(val)) {
+      tasks[idx].tags.push(val);
+      save();
+    }
+    dd.remove(); isEditingInline = false; renderTable();
+  };
+  addRow.querySelector('input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
+  addRow.appendChild(addBtn);
+  dd.appendChild(addRow);
+  td.appendChild(dd);
+  const closeHandler = () => { dd.remove(); isEditingInline = false; document.removeEventListener('click', closeHandler); };
+  setTimeout(() => document.addEventListener('click', closeHandler), 0);
+}
 function toggleReviewed(idx, val) { tasks[idx].reviewed = val; save(); renderTable(); }
 function quickDelete(idx) {
   if (!confirm('Delete "' + tasks[idx].task + '"?')) return;
@@ -1568,12 +1773,15 @@ function populateModalDropdowns() {
   const secSel = document.getElementById('fSection');
   secSel.innerHTML = '<option value="">-- Select existing section --</option>' + sections.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
 
-  const epicSel = document.getElementById('fEpicOwner');
-  epicSel.innerHTML = '<option value="">-- Select --</option>' + owners.epic.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  const epicWrap = document.getElementById('fEpicOwnerWrap');
+  epicWrap.innerHTML = owners.epic.map(o => `<label><input type="checkbox" value="${esc(o)}" class="fEpicCb"> ${esc(o)}</label>`).join('');
 
-  const custSel = document.getElementById('fAnalystOwner');
-  custSel.innerHTML = '<option value="">-- Select --</option><option value="TBD">TBD</option><option value="N/A">N/A</option><option value="All">All</option>' +
-    owners.customer.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  const custOpts = ['TBD', 'N/A', 'All', ...owners.customer];
+  const custWrap = document.getElementById('fAnalystOwnerWrap');
+  custWrap.innerHTML = custOpts.map(o => `<label><input type="checkbox" value="${esc(o)}" class="fCustCb"> ${esc(o)}</label>`).join('');
+
+  const tagsWrap = document.getElementById('fTagsWrap');
+  tagsWrap.innerHTML = TAG_OPTIONS.map(t => `<label><input type="checkbox" value="${esc(t)}" class="fTagCb"> ${esc(t)}</label>`).join('');
 }
 
 function renderUpdatesLog(updates) {
@@ -1613,8 +1821,7 @@ function openAddModal() {
   document.getElementById('fTask').value = '';
   document.getElementById('fSlg').value = '';
   document.getElementById('fDescription').value = '';
-  document.getElementById('fEpicOwner').value = '';
-  document.getElementById('fAnalystOwner').value = '';
+  document.querySelectorAll('.fEpicCb, .fCustCb, .fTagCb').forEach(cb => cb.checked = false);
   document.getElementById('fStatus').value = 'Not Started';
   document.getElementById('fPriority').value = '';
   document.getElementById('fDueDate').value = '';
@@ -1636,8 +1843,12 @@ function openEditModal(idx) {
   document.getElementById('fTask').value = t.task || '';
   document.getElementById('fSlg').value = t.slg || '';
   document.getElementById('fDescription').value = t.description || '';
-  document.getElementById('fEpicOwner').value = t.epicOwner || '';
-  document.getElementById('fAnalystOwner').value = t.analystOwner || '';
+  const epicList = getOwnerList(t.epicOwner);
+  document.querySelectorAll('.fEpicCb').forEach(cb => cb.checked = epicList.includes(cb.value));
+  const custList = getOwnerList(t.analystOwner);
+  document.querySelectorAll('.fCustCb').forEach(cb => cb.checked = custList.includes(cb.value));
+  const tagList = t.tags || [];
+  document.querySelectorAll('.fTagCb').forEach(cb => cb.checked = tagList.includes(cb.value));
   document.getElementById('fStatus').value = t.status || 'Not Started';
   document.getElementById('fPriority').value = t.priority || '';
   document.getElementById('fDueDate').value = t.dueDate || '';
@@ -1675,8 +1886,9 @@ function saveTask() {
     section, task: document.getElementById('fTask').value.trim(),
     slg: normalizeSlg(document.getElementById('fSlg').value.trim()),
     description: document.getElementById('fDescription').value.trim(),
-    epicOwner: document.getElementById('fEpicOwner').value.trim(),
-    analystOwner: document.getElementById('fAnalystOwner').value.trim(),
+    epicOwner: [...document.querySelectorAll('.fEpicCb:checked')].map(cb => cb.value).join(', '),
+    analystOwner: [...document.querySelectorAll('.fCustCb:checked')].map(cb => cb.value).join(', '),
+    tags: [...document.querySelectorAll('.fTagCb:checked')].map(cb => cb.value),
     status: newStatus,
     priority: document.getElementById('fPriority').value,
     dueDate: document.getElementById('fDueDate').value,
