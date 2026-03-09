@@ -1887,7 +1887,7 @@ function renderTable() {
     const v = isViewer();
     html += `<tr class="${t.flagged ? 'flagged' : prioClass}" ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
       <td style="text-align:center">
-        ${t.flagged ? '<span class="flag-btn active" style="opacity:1">&#9873;</span>' : ''}
+        ${!v ? `<button class="flag-btn ${t.flagged ? 'active' : ''}" onclick="toggleFlag(${realIdx})" title="${t.flagged ? 'Remove flag' : 'Flag for discussion'}" style="color:var(--red)">&#9873;</button>` : t.flagged ? '<span style="color:var(--red);font-size:14px">&#9873;</span>' : ''}
         <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed" ${v ? 'disabled' : ''}>
       </td>
       <td class="task-name">${esc(t.task)}<div class="task-desc">${esc(t.description)}</div></td>
