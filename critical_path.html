@@ -621,6 +621,14 @@
     font-size: 14px; padding: 0 2px; line-height: 1; transition: color 0.15s;
   }
   .owner-chip button:hover { color: var(--red); }
+  .owner-chip-rename { font-size: 11px !important; opacity: 0; transition: opacity 0.15s !important; }
+  .owner-chip:hover .owner-chip-rename { opacity: 1; }
+  .owner-chip-rename:hover { color: var(--accent) !important; }
+  .owner-chip-input {
+    font-size: 12px; padding: 2px 6px; border: 1.5px solid var(--accent); border-radius: 6px;
+    background: var(--surface); color: var(--text); font-family: var(--font-body); outline: none;
+    width: 120px;
+  }
   .add-owner-row { display: flex; gap: 5px; margin-top: 8px; }
   .add-owner-row input {
     flex: 1; padding: 6px 10px; font-size: 12px; border-radius: 8px;
@@ -2261,11 +2269,60 @@ function switchTab(tab, el) {
 
 function renderOwnerLists() {
   document.getElementById('epicOwnerList').innerHTML = owners.epic.map(o =>
-    `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('epic','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
+    `<div class="owner-chip" id="chip-epic-${btoa(encodeURIComponent(o))}">
+      <span class="owner-chip-name">${esc(o)}</span>
+      <button class="owner-chip-rename" onclick="startRenameOwner('epic',${JSON.stringify(o)})" title="Rename">&#9998;</button>
+      <button onclick="removeOwner('epic',${JSON.stringify(o)})">&times;</button>
+    </div>`
   ).join('');
   document.getElementById('customerOwnerList').innerHTML = owners.customer.map(o =>
-    `<div class="owner-chip">${esc(o)}<button onclick="removeOwner('customer','${o.replace(/'/g,"\\'")}')">&times;</button></div>`
+    `<div class="owner-chip" id="chip-customer-${btoa(encodeURIComponent(o))}">
+      <span class="owner-chip-name">${esc(o)}</span>
+      <button class="owner-chip-rename" onclick="startRenameOwner('customer',${JSON.stringify(o)})" title="Rename">&#9998;</button>
+      <button onclick="removeOwner('customer',${JSON.stringify(o)})">&times;</button>
+    </div>`
   ).join('');
+}
+
+function startRenameOwner(type, oldName) {
+  const chipId = `chip-${type}-${btoa(encodeURIComponent(oldName))}`;
+  const chip = document.getElementById(chipId);
+  if (!chip) return;
+  chip.innerHTML = `
+    <input class="owner-chip-input" type="text" value="${esc(oldName)}" id="renameInput-${chipId}"
+      onkeydown="if(event.key==='Enter')confirmRenameOwner('${type}',${JSON.stringify(oldName)},this.value);if(event.key==='Escape')renderOwnerLists()">
+    <button onclick="confirmRenameOwner('${type}',${JSON.stringify(oldName)},document.getElementById('renameInput-${chipId}').value)">&#10003;</button>
+    <button onclick="renderOwnerLists()">&#10005;</button>`;
+  const input = document.getElementById(`renameInput-${chipId}`);
+  if (input) { input.focus(); input.select(); }
+}
+
+function confirmRenameOwner(type, oldName, newName) {
+  newName = (newName || '').trim();
+  if (!newName || newName === oldName) { renderOwnerLists(); return; }
+  if (owners[type].includes(newName)) { alert(`"${newName}" already exists.`); return; }
+  // Update the owners list
+  const idx = owners[type].indexOf(oldName);
+  if (idx !== -1) owners[type][idx] = newName;
+  saveOwners();
+  // Rename across all tasks
+  const field = type === 'epic' ? 'epicOwner' : 'analystOwner';
+  tasks.forEach(t => {
+    const list = getOwnerList(t[field]);
+    const i = list.indexOf(oldName);
+    if (i !== -1) {
+      list[i] = newName;
+      t[field] = list.join(', ');
+    }
+    // Also rename in epicOwnerRoles if applicable
+    if (type === 'epic' && t.epicOwnerRoles && t.epicOwnerRoles[oldName] !== undefined) {
+      t.epicOwnerRoles[newName] = t.epicOwnerRoles[oldName];
+      delete t.epicOwnerRoles[oldName];
+    }
+  });
+  save();
+  renderOwnerLists();
+  populateQuickAdd();
 }
 
 function addOwner(type) {
