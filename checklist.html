@@ -781,7 +781,7 @@ function render() {
     // Linked critical path tasks — distinct section with tinted background
     if (linked.length > 0) {
       html += `<div class="linked-section">
-        <div class="linked-section-hdr" onclick="toggleLinked(${JSON.stringify(analyst)})">
+        <div class="linked-section-hdr" data-analyst="${esc(analyst)}" onclick="toggleLinked(this.dataset.analyst)">
           <span>Critical Path Tasks</span>
           <span class="ls-badge">${linked.length}</span>
           <span class="toggle-arrow${linkedExpanded ? ' open' : ''}" id="linkedArrow-${sid}">&#9654;</span>
@@ -830,12 +830,12 @@ function render() {
     // Add item row (editors only)
     if (!v) {
       html += `<div class="add-item-row">
-        <input type="text" id="addInput-${sid}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem(${JSON.stringify(analyst)})">
+        <input type="text" id="addInput-${sid}" data-analyst="${esc(analyst)}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem(this.dataset.analyst)">
         <select id="addLink-${sid}">
           <option value="">Link task...</option>
           ${taskOpts}
         </select>
-        <button onclick="addItem(${JSON.stringify(analyst)})">+ Add</button>
+        <button data-analyst="${esc(analyst)}" onclick="addItem(this.dataset.analyst)">+ Add</button>
       </div>`;
     }
 
