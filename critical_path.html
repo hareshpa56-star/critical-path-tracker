@@ -717,6 +717,18 @@
     margin-top: 10px; display: none;
   }
 
+  /* Drag-and-drop */
+  .drag-handle {
+    cursor: grab; color: var(--text-muted); font-size: 13px; padding: 0 3px 0 0;
+    opacity: 0; transition: opacity 0.15s; user-select: none; vertical-align: middle;
+    display: inline-block;
+  }
+  tr:hover .drag-handle { opacity: 1; }
+  tr.dragging { opacity: 0.35; background: var(--surface2) !important; }
+  tr.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
+  tr.drag-over-bottom { box-shadow: inset 0 -2px 0 var(--accent); }
+  tr.section-row.drag-over { background: var(--accent-light) !important; box-shadow: none; outline: 2px dashed var(--accent); outline-offset: -2px; }
+
   /* Print styles */
   @media print {
     body { background: #fff !important; }
@@ -1865,7 +1877,9 @@ function renderTable() {
       lastSection = t.section;
       const isCollapsed = collapsedSections[t.section];
       const count = sectionCounts[t.section] || 0;
-      html += `<tr class="section-row" onclick="toggleSection('${t.section.replace(/'/g,"\\'")}')">
+      html += `<tr class="section-row" data-section="${esc(t.section)}" onclick="toggleSection('${t.section.replace(/'/g,"\\'")}')"`
+        + (!v && !sortCol ? ` ondragover="sectionDragOver(event)" ondragleave="sectionDragLeave(event)" ondrop="dropOnSection(event)"` : '')
+        + `>
         <td colspan="10">
           <span class="section-toggle ${isCollapsed ? 'collapsed' : ''}">\u25BC</span>${esc(t.section)}
           <span class="section-task-count">(${count} task${count !== 1 ? 's' : ''})</span>
@@ -1885,8 +1899,10 @@ function renderTable() {
     const prioClass = t.priority ? 'priority-' + t.priority.toLowerCase() : '';
 
     const v = isViewer();
-    html += `<tr class="${t.flagged ? 'flagged' : prioClass}" ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
-      <td style="text-align:center">
+    const dragAttrs = (!v && !sortCol) ? `draggable="true" ondragstart="taskDragStart(event,${realIdx})" ondragend="taskDragEnd(event)" ondragover="taskDragOver(event,${realIdx})" ondragleave="taskDragLeave(event)" ondrop="dropOnTask(event,${realIdx})"` : '';
+    html += `<tr class="${t.flagged ? 'flagged' : prioClass}" data-idx="${realIdx}" ${dragAttrs} ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
+      <td style="text-align:center;white-space:nowrap">
+        ${!v && !sortCol ? `<span class="drag-handle" title="Drag to reorder">&#8942;&#8942;</span>` : ''}
         ${!v ? `<button class="flag-btn ${t.flagged ? 'active' : ''}" onclick="toggleFlag(${realIdx})" title="${t.flagged ? 'Remove flag' : 'Flag for discussion'}" style="color:var(--red)">&#9873;</button>` : t.flagged ? '<span style="color:var(--red);font-size:14px">&#9873;</span>' : ''}
         <input type="checkbox" class="reviewed-check" ${t.reviewed ? 'checked' : ''} onchange="toggleReviewed(${realIdx}, this.checked)" title="Mark reviewed" ${v ? 'disabled' : ''}>
       </td>
@@ -1972,6 +1988,96 @@ function quickStatus(idx, val) {
   save(); renderTable();
 }
 function toggleFlag(idx) { tasks[idx].flagged = !tasks[idx].flagged; save(); renderTable(); }
+
+// ── Drag and drop reordering ──
+let _dragSrcIdx = null;
+
+function _clearDragClasses() {
+  document.querySelectorAll('.drag-over, .drag-over-bottom, .dragging').forEach(el => {
+    el.classList.remove('drag-over', 'drag-over-bottom', 'dragging');
+  });
+}
+
+function taskDragStart(e, idx) {
+  _dragSrcIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', idx);
+  setTimeout(() => e.currentTarget.classList.add('dragging'), 0);
+}
+
+function taskDragEnd(e) {
+  _clearDragClasses();
+  _dragSrcIdx = null;
+}
+
+function taskDragOver(e, idx) {
+  if (_dragSrcIdx === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  _clearDragClasses();
+  const rect = e.currentTarget.getBoundingClientRect();
+  const isBottom = e.clientY > rect.top + rect.height / 2;
+  e.currentTarget.classList.add(isBottom ? 'drag-over-bottom' : 'drag-over');
+}
+
+function taskDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over', 'drag-over-bottom');
+}
+
+function dropOnTask(e, targetIdx) {
+  e.preventDefault();
+  _clearDragClasses();
+  if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
+
+  const srcTask = tasks[_dragSrcIdx];
+  const targetTask = tasks[targetIdx];
+  const rect = e.currentTarget.getBoundingClientRect();
+  const insertAfter = e.clientY > rect.top + rect.height / 2;
+
+  // Move src to target's section
+  srcTask.section = targetTask.section;
+
+  // Reorder: remove src, then insert relative to target's new position
+  tasks.splice(_dragSrcIdx, 1);
+  const newTargetIdx = tasks.indexOf(targetTask);
+  tasks.splice(insertAfter ? newTargetIdx + 1 : newTargetIdx, 0, srcTask);
+
+  _dragSrcIdx = null;
+  save();
+  renderTable();
+}
+
+function sectionDragOver(e) {
+  if (_dragSrcIdx === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  _clearDragClasses();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function sectionDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function dropOnSection(e) {
+  e.preventDefault();
+  _clearDragClasses();
+  if (_dragSrcIdx === null) return;
+
+  const sectionName = e.currentTarget.dataset.section;
+  const srcTask = tasks[_dragSrcIdx];
+  if (srcTask.section === sectionName) return; // already in this section, no-op
+
+  // Move to this section: insert before the first task in that section
+  srcTask.section = sectionName;
+  tasks.splice(_dragSrcIdx, 1);
+  const firstInSection = tasks.findIndex(t => t.section === sectionName);
+  tasks.splice(firstInSection === -1 ? tasks.length : firstInSection, 0, srcTask);
+
+  _dragSrcIdx = null;
+  save();
+  renderTable();
+}
 function quickPriority(idx, val) { tasks[idx].priority = val; save(); renderTable(); }
 
 // ── Multi-select Owner Helpers ──
