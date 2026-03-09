@@ -1958,6 +1958,7 @@ function renderTable() {
   updateFilterChips(filtered.length, tasks.length);
 
   const tbody = document.getElementById('taskTable');
+  const v = isViewer();
   let html = '';
   let lastSection = '';
 
@@ -1988,7 +1989,6 @@ function renderTable() {
     // Priority border class (#9) -- flagged class takes precedence via CSS
     const prioClass = t.priority ? 'priority-' + t.priority.toLowerCase() : '';
 
-    const v = isViewer();
     const dragAttrs = (!v && !sortCol) ? `draggable="true" ondragstart="taskDragStart(event,${realIdx})" ondragend="taskDragEnd(event)" ondragover="taskDragOver(event,${realIdx})" ondragleave="taskDragLeave(event)" ondrop="dropOnTask(event,${realIdx})"` : '';
     html += `<tr class="${t.flagged ? 'flagged' : prioClass}" data-idx="${realIdx}" ${dragAttrs} ${!v ? `ondblclick="openEditModal(${realIdx})"` : ''}>
       <td style="text-align:center;white-space:nowrap">
