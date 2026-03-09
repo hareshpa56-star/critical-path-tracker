@@ -2385,46 +2385,60 @@ function sendEmail() {
     <p style="margin:5px 0 0;font-size:13px;opacity:0.85">${date}</p>
   </div>`;
 
-  html += `<div style="display:flex;background:#f8f8f5;padding:14px 28px;border-bottom:1px solid #e2e0d8;gap:28px;flex-wrap:wrap">`;
-  const statItems = [
-    {label:'Total',val:total,color:'#1c1917'}, {label:'Done',val:done,color:'#16a34a'},
-    {label:'Testing',val:testing,color:'#2563eb'}, {label:'Active',val:active,color:'#d97706'},
-    {label:'Not Started',val:notStarted,color:'#dc2626'}, {label:'Complete',val:pct+'%',color:pct>=70?'#16a34a':pct>=40?'#d97706':'#dc2626'}
-  ];
-  if (overdue > 0) statItems.push({label:'Overdue',val:overdue,color:'#dc2626'});
-  if (highPri > 0) statItems.push({label:'High Priority',val:highPri,color:'#dc2626'});
-  statItems.forEach(s => {
-    html += `<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:${s.color}">${s.val}</div><div style="font-size:10px;color:#a8a29e;text-transform:uppercase;letter-spacing:0.8px;font-weight:600">${s.label}</div></div>`;
-  });
-  html += `</div>`;
+  // Sort tasks by section to ensure all tasks in the same section are grouped together
+  const sortedTasks = [...tasks].sort((a, b) => (a.section || '').localeCompare(b.section || ''));
+
+  const cellStyle = 'border:1px solid #d8d4cc;padding:9px 12px;vertical-align:top';
+  const hdStyle = 'border:1px solid #c4bfb3;padding:8px 12px;background:#f0ece4;color:#57534e;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px';
 
   let lastSection = '';
-  html += `<table style="width:100%;border-collapse:collapse;font-size:13px">`;
-  tasks.forEach(t => {
+  html += `<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">
+    <colgroup>
+      <col style="width:190px">
+      <col style="width:70px">
+      <col style="width:70px">
+      <col style="width:80px">
+      <col style="width:90px">
+      <col style="width:150px">
+      <col style="width:auto">
+    </colgroup>
+    <thead>
+      <tr>
+        <th style="${hdStyle}">Task</th>
+        <th style="${hdStyle}">Priority</th>
+        <th style="${hdStyle}">Due</th>
+        <th style="${hdStyle}">SLG</th>
+        <th style="${hdStyle}">Status</th>
+        <th style="${hdStyle}">Owners</th>
+        <th style="${hdStyle}">This Week's Goal</th>
+      </tr>
+    </thead>
+    <tbody>`;
+  sortedTasks.forEach(t => {
     if (t.section !== lastSection) {
       lastSection = t.section;
-      html += `<tr><td colspan="7" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:11px 18px;border-bottom:2px solid #2563eb;font-size:13px">${esc(t.section)}</td></tr>`;
+      html += `<tr><td colspan="7" style="background:#eff4ff;color:#2563eb;font-weight:700;padding:10px 14px;border:1px solid #c4bfb3;font-size:13px">${esc(t.section)}</td></tr>`;
     }
     const sc = statusColors[t.status] || '#666';
     const sb = statusBg[t.status] || '#f5f5f5';
     const overdueFlag = isOverdue(t) ? ' <span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:3px">OVERDUE</span>' : '';
-    const prioHtml = t.priority ? `<span style="background:${prioBg[t.priority]||'#f5f5f5'};color:${prioColors[t.priority]||'#666'};padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${esc(t.priority)}</span>` : '';
+    const prioHtml = t.priority ? `<span style="background:${prioBg[t.priority]||'#f5f5f5'};color:${prioColors[t.priority]||'#666'};padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${esc(t.priority)}</span>` : '<span style="color:#a8a29e">--</span>';
 
-    html += `<tr style="border-bottom:1px solid #e2e0d8">
-      <td style="padding:9px 18px;font-weight:600;width:180px;vertical-align:top">${esc(t.task)}</td>
-      <td style="padding:9px 6px;vertical-align:top;white-space:nowrap">${prioHtml}</td>
-      <td style="padding:9px 6px;vertical-align:top;font-size:12px;white-space:nowrap">${t.dueDate ? fmtDueDate(t.dueDate) + overdueFlag : ''}</td>
-      <td style="padding:9px 6px;color:#2563eb;font-size:12px;vertical-align:top;white-space:nowrap">${t.slg ? fmtSlg(t.slg) : ''}</td>
-      <td style="padding:9px 6px;vertical-align:top">
-        <span style="background:${sb};color:${sc};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(t.status)}</span>
+    html += `<tr>
+      <td style="${cellStyle};font-weight:600;line-height:1.4">${esc(t.task)}</td>
+      <td style="${cellStyle};white-space:nowrap">${prioHtml}</td>
+      <td style="${cellStyle};font-size:12px;white-space:nowrap">${t.dueDate ? fmtDueDate(t.dueDate) + overdueFlag : '<span style="color:#a8a29e">--</span>'}</td>
+      <td style="${cellStyle};color:#2563eb;font-size:12px;white-space:nowrap">${t.slg ? fmtSlg(t.slg) : '<span style="color:#a8a29e">--</span>'}</td>
+      <td style="${cellStyle}">
+        <span style="background:${sb};color:${sc};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap">${esc(t.status)}</span>
       </td>
-      <td style="padding:9px 6px;color:#57534e;font-size:12px;vertical-align:top">
-        <span style="color:#2563eb">${esc(t.epicOwner)}</span> / <span style="color:#7c3aed">${esc(t.analystOwner)}</span>
+      <td style="${cellStyle};font-size:12px;line-height:1.5">
+        <span style="color:#2563eb;font-weight:600">${esc(t.epicOwner)||'--'}</span><br><span style="color:#7c3aed">${esc(t.analystOwner)||'--'}</span>
       </td>
-      <td style="padding:9px 18px;color:#57534e;line-height:1.5;vertical-align:top">${esc(t.goal)}</td>
+      <td style="${cellStyle};color:#57534e;line-height:1.6;font-size:13px">${esc(t.goal) || '<span style="color:#a8a29e;font-style:italic">No goal set</span>'}</td>
     </tr>`;
   });
-  html += `</table>`;
+  html += `</tbody></table>`;
   html += `<div style="padding:14px 28px;background:#f8f8f5;border-top:1px solid #e2e0d8;border-radius:0 0 10px 10px;font-size:11px;color:#a8a29e;font-weight:500">Generated from NLHS Critical Path Tracker</div></div>`;
 
   const win = window.open('', '_blank', 'width=1000,height=700');
