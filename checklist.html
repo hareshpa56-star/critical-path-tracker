@@ -122,6 +122,24 @@
   .btn-reset { background: var(--orange-bg); border-color: transparent; color: var(--orange); }
   .btn-reset:hover { background: var(--orange); color: #fff; }
 
+  /* Tools dropdown */
+  .tools-menu-wrap { position: relative; }
+  .tools-dropdown {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-md); z-index: 150; min-width: 200px;
+    animation: slideIn 0.15s ease;
+  }
+  .tools-dropdown.open { display: block; }
+  .tools-item {
+    display: block; width: 100%; padding: 10px 16px; background: none; border: none;
+    text-align: left; font-size: 13px; font-family: var(--font-body); font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+  }
+  .tools-item:hover { background: var(--surface2); color: var(--text); }
+  .tools-item:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+  .tools-item:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+
   /* Layout */
   .page { padding: 24px 32px 40px; position: relative; z-index: 1; }
 
@@ -140,7 +158,7 @@
 
   /* Analyst cards */
   .analyst-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
     gap: 20px;
   }
   .analyst-card {
@@ -166,28 +184,50 @@
     font-size: 12px; font-weight: 600; color: var(--text-muted);
   }
   .analyst-progress .done-count { color: var(--green); font-weight: 700; }
-  .analyst-linked {
-    font-size: 11px; color: var(--text-muted); padding: 0 20px; margin-top: 12px;
-    font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px;
-    cursor: pointer; display: flex; align-items: center; gap: 6px;
-    user-select: none; transition: color 0.15s;
+  /* Per-card progress bar */
+  .card-progress { padding: 0 20px 10px; }
+  .card-progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .card-progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .card-progress-fill.full { background: var(--green); }
+  .card-progress-fill.some { background: var(--orange); }
+  .card-progress-fill.none { background: var(--border); }
+
+  /* Linked tasks section */
+  .linked-section { background: var(--accent-light); border-top: 1px solid var(--border); }
+  [data-theme="dark"] .linked-section { background: rgba(91,138,245,0.07); }
+  .linked-section-hdr {
+    padding: 8px 20px; display: flex; align-items: center; gap: 7px;
+    font-size: 10px; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    cursor: pointer; user-select: none; transition: opacity 0.15s;
   }
-  .analyst-linked:hover { color: var(--accent); }
-  .analyst-linked .toggle-arrow { font-size: 9px; transition: transform 0.2s; }
-  .analyst-linked .toggle-arrow.open { transform: rotate(90deg); }
+  .linked-section-hdr:hover { opacity: 0.75; }
+  .linked-section-hdr .ls-badge {
+    background: var(--accent); color: #fff; border-radius: 10px;
+    padding: 1px 7px; font-size: 9px; font-weight: 800; letter-spacing: 0;
+  }
+  .linked-section-hdr .toggle-arrow { font-size: 9px; transition: transform 0.2s; margin-left: auto; }
+  .linked-section-hdr .toggle-arrow.open { transform: rotate(90deg); }
   .linked-tasks {
-    padding: 8px 20px 4px; display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 4px 20px 10px; display: flex; flex-wrap: wrap; gap: 6px;
   }
   .linked-tasks.collapsed { display: none; }
   .linked-chip {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-    background: var(--accent-light); color: var(--accent); border: 1px solid var(--border);
+    background: var(--surface); color: var(--accent); border: 1px solid rgba(37,99,235,0.25);
     text-decoration: none; transition: all 0.15s; cursor: pointer;
   }
   .linked-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
   .linked-chip .lc-status {
     width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Checklist section header */
+  .checklist-section-hdr {
+    padding: 8px 20px 2px; font-size: 10px; font-weight: 700;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px;
+    border-top: 1px solid var(--border);
   }
 
   /* Checklist items */
@@ -253,6 +293,10 @@
   .empty-state {
     text-align: center; padding: 40px 20px; color: var(--text-muted);
     font-size: 13px; font-style: italic;
+  }
+  .empty-state-soft {
+    padding: 10px 20px 14px; color: var(--text-muted);
+    font-size: 12px; font-style: italic;
   }
 
   /* Modal */
@@ -383,8 +427,13 @@
     <button class="btn btn-dark-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle dark mode">&#9790;</button>
     <a href="/critical_path.html" class="btn btn-ghost">&#9664; Tracker</a>
     <a href="/dashboard.html" class="btn btn-ghost">&#9636; Dashboard</a>
-    <button class="btn btn-reset editor-only" onclick="resetAllChecklists()" title="Uncheck all items for new week">&#8634; Reset Week</button>
     <button class="btn editor-only" onclick="openAddAnalyst()" title="Add a new analyst section">+ Analyst</button>
+    <div class="tools-menu-wrap editor-only" id="toolsMenuWrap">
+      <button class="btn btn-ghost" onclick="toggleToolsMenu()" title="More tools">&#8942;</button>
+      <div class="tools-dropdown" id="toolsDropdown">
+        <button class="tools-item" onclick="resetAllChecklists();closeToolsMenu()">&#8634; Reset Week</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -426,6 +475,7 @@ let checklistItems = [];
 let cpTasks = [];
 let saveTimer = null;
 let APP_PASSWORD_REQUIRED = false;
+let ALIAS_MAP = {}; // maps short first-name-only entries → canonical full name
 
 // role='' or role='none' means unauthenticated; role='viewer' is read-only; role='editor' has full access
 function isViewer() { return userRole === 'viewer'; }
@@ -626,27 +676,44 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'loginPassword') doLogin();
 });
 
+// ── Alias resolution: maps "Christa" → "Christa Brenson" when unique first-name match ──
+function buildAliasMap(nameList) {
+  const map = {};
+  nameList.forEach(name => {
+    if (!name.includes(' ')) {
+      // Single-word name — find full names that start with this word
+      const matches = nameList.filter(n => n !== name && n.split(' ')[0] === name);
+      if (matches.length === 1) map[name] = matches[0];
+    }
+  });
+  return map;
+}
+
+// Resolve a name through the alias map
+function resolveAlias(name) { return ALIAS_MAP[name] || name; }
+
 // ── Get analysts (syncs with Customer Owners from Settings) ──
 function getAnalysts() {
   const fromChecklist = checklistItems.map(i => normalizeAnalystName(i.analyst)).filter(Boolean);
-  // Pull from Customer Owners in localStorage (same list as tracker Settings)
   let fromSettings = [];
   try {
     const saved = JSON.parse(localStorage.getItem('nlhs_cp_owners') || '{}');
     if (saved.customer) fromSettings = saved.customer.map(normalizeAnalystName).filter(Boolean);
   } catch(e) {}
-  // Also pull from task data, splitting comma-separated owners
   const fromTasks = cpTasks.flatMap(t =>
     (t.analystOwner || '').split(',').map(s => normalizeAnalystName(s))
   ).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All');
-  return [...new Set([...fromSettings, ...fromChecklist, ...fromTasks])].sort();
+  const raw = [...new Set([...fromSettings, ...fromChecklist, ...fromTasks])];
+  // Build alias map then resolve all names to canonical form and deduplicate
+  ALIAS_MAP = buildAliasMap(raw);
+  return [...new Set(raw.map(resolveAlias))].sort();
 }
 
 // ── Get linked critical path tasks for an analyst ──
 function getLinkedTasks(analyst) {
   const norm = normalizeAnalystName(analyst);
   return cpTasks.filter(t => {
-    const owners = (t.analystOwner || '').split(',').map(s => normalizeAnalystName(s));
+    const owners = (t.analystOwner || '').split(',').map(s => resolveAlias(normalizeAnalystName(s)));
     return owners.includes(norm) && t.status !== 'Done';
   });
 }
@@ -685,41 +752,61 @@ function render() {
   const taskOpts = cpTasks.filter(t => t.status !== 'Done')
     .map(t => `<option value="${esc(t.id)}">${esc(t.task)}</option>`).join('');
 
+  const v = isViewer();
   let html = '';
   analysts.forEach(analyst => {
-    const items = checklistItems.filter(i => i.analyst === analyst);
+    // Match checklist items by canonical name (resolves aliases like "Christa" → "Christa Brenson")
+    const items = checklistItems.filter(i => resolveAlias(normalizeAnalystName(i.analyst)) === analyst);
     const done = items.filter(i => i.done).length;
+    const total = items.length;
     const linked = getLinkedTasks(analyst);
+    const sid = safeId(analyst);
+
+    // Progress bar
+    const pctCard = total ? Math.round(done / total * 100) : 0;
+    const fillClass = total === 0 ? 'none' : pctCard === 100 ? 'full' : 'some';
+
+    // Linked section: auto-expand when no checklist items
+    const linkedExpanded = linked.length > 0 && items.length === 0;
 
     html += `<div class="analyst-card">
       <div class="analyst-header">
         <div class="analyst-name">${esc(analyst)}</div>
-        <div class="analyst-progress"><span class="done-count">${done}</span> / ${items.length} done</div>
+        <div class="analyst-progress"><span class="done-count">${done}</span> / ${total} done</div>
+      </div>
+      <div class="card-progress">
+        <div class="card-progress-bar"><div class="card-progress-fill ${fillClass}" style="width:${pctCard}%"></div></div>
       </div>`;
 
-    // Linked critical path tasks
-    const sid = safeId(analyst);
+    // Linked critical path tasks — distinct section with tinted background
     if (linked.length > 0) {
-      html += `<div class="analyst-linked" onclick="toggleLinked(${JSON.stringify(analyst)})">
-        <span class="toggle-arrow" id="linkedArrow-${sid}">&#9654;</span>
-        Show Linked Critical Path Items (${linked.length})
-      </div>
-        <div class="linked-tasks collapsed" id="linkedTasks-${sid}">`;
+      html += `<div class="linked-section">
+        <div class="linked-section-hdr" onclick="toggleLinked(${JSON.stringify(analyst)})">
+          <span>Critical Path Tasks</span>
+          <span class="ls-badge">${linked.length}</span>
+          <span class="toggle-arrow${linkedExpanded ? ' open' : ''}" id="linkedArrow-${sid}">&#9654;</span>
+        </div>
+        <div class="linked-tasks${linkedExpanded ? '' : ' collapsed'}" id="linkedTasks-${sid}">`;
       linked.forEach(t => {
         const color = STATUS_COLORS[t.status] || '#666';
-        html += `<a class="linked-chip" href="/critical_path.html" title="${esc(t.task)} - ${esc(t.status)}${t.goal ? '\nGoal: ' + t.goal : ''}">
+        html += `<a class="linked-chip" href="/critical_path.html" title="${esc(t.task)} — ${esc(t.status)}${t.goal ? '\nGoal: ' + t.goal : ''}">
           <span class="lc-status" style="background:${color}"></span>${esc(t.task)}
         </a>`;
       });
-      html += `</div>`;
+      html += `</div></div>`;
     }
 
-    // Checklist items
+    // Checklist items section
+    html += `<div class="checklist-section-hdr">Weekly Checklist</div>`;
     html += `<div class="checklist">`;
     if (items.length === 0) {
-      html += `<div class="empty-state">No items yet. Add one below.</div>`;
+      if (linked.length > 0) {
+        // Softer empty state when linked tasks are present
+        html += `<div class="empty-state-soft">No weekly items yet — add one below.</div>`;
+      } else {
+        html += `<div class="empty-state">No items yet. Add one below.</div>`;
+      }
     }
-    const v = isViewer();
     items.forEach(item => {
       const idx = checklistItems.indexOf(item);
       const linkedTask = item.linkedTaskId ? cpTasks.find(t => t.id === item.linkedTaskId) : null;
@@ -839,9 +926,21 @@ function addAnalyst() {
   render();
 }
 
+// ── Tools dropdown ──
+function toggleToolsMenu() {
+  document.getElementById('toolsDropdown').classList.toggle('open');
+}
+function closeToolsMenu() {
+  document.getElementById('toolsDropdown').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('toolsMenuWrap');
+  if (wrap && !wrap.contains(e.target)) closeToolsMenu();
+});
+
 // ── Keyboard ──
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { closeModal(); closeToolsMenu(); }
   if (e.key === 'Enter' && e.target.id === 'newAnalystName') addAnalyst();
 });
 
