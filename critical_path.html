@@ -1881,6 +1881,11 @@ function sortBy(col) {
   if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
   renderTable();
 }
+function clearSort() {
+  sortCol = null; sortDir = 1;
+  document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+  renderTable();
+}
 
 // ── Auto-log status change ──
 function autoLogStatusChange(idx, oldStatus, newStatus) {
@@ -2908,10 +2913,16 @@ function updateFilterChips(showing, total) {
   const searchVal = document.getElementById('searchInput').value.trim();
   if (searchVal) chips.push({label: 'Search: "' + searchVal + '"', clear: () => { document.getElementById('searchInput').value = ''; renderTable(); }});
 
-  if (anyFilter) {
+  // Sort chip — shown whenever a column sort is active (sections are hidden while sorting)
+  const sortColLabels = { task:'Task', priority:'Priority', dueDate:'Due Date', slg:'Ref SLG', epicOwner:'Epic Owner', analystOwner:'Customer', status:'Status', goal:'End of Week Goal' };
+  const sortChipHtml = sortCol
+    ? `<span class="filter-chip" style="background:var(--orange-bg);color:var(--orange);border-color:var(--orange)">Sorted by ${sortColLabels[sortCol] || sortCol} — sections hidden <span class="filter-chip-x" onclick="clearSort()">&times;</span></span>`
+    : '';
+
+  if (anyFilter || sortCol) {
     countEl.textContent = 'Showing ' + showing + ' of ' + total + ' tasks';
-    clearBtn.style.display = '';
-    chipsEl.innerHTML = chips.map((c, i) =>
+    clearBtn.style.display = anyFilter ? '' : 'none';
+    chipsEl.innerHTML = sortChipHtml + chips.map((c, i) =>
       `<span class="filter-chip">${esc(c.label)} <span class="filter-chip-x" onclick="filterChipActions[${i}]()">&times;</span></span>`
     ).join('');
     window.filterChipActions = chips.map(c => c.clear);
