@@ -802,6 +802,22 @@
   /* Reset week button */
   .btn-reset { background: var(--orange-bg); border-color: transparent; color: var(--orange); }
   .btn-reset:hover { background: var(--orange); color: #fff; }
+  .tools-menu-wrap { position: relative; display: inline-block; }
+  .tools-dropdown {
+    display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow-md); z-index: 200; min-width: 200px; padding: 4px 0;
+    animation: slideIn 0.15s ease;
+  }
+  .tools-dropdown.open { display: block; }
+  .tools-item {
+    display: flex; flex-direction: column; width: 100%; text-align: left; background: none;
+    border: none; padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text);
+    cursor: pointer; font-family: var(--font-body); transition: background 0.1s;
+  }
+  .tools-item:hover { background: var(--accent-light); color: var(--accent); }
+  .tools-item:first-child:hover { background: var(--orange-bg); color: var(--orange); }
+  .tools-item-hint { font-size: 10px; font-weight: 400; color: var(--text-muted); margin-top: 1px; }
 
   /* History button */
   .btn-history { background: var(--purple-bg); border-color: transparent; color: var(--purple); }
@@ -1042,12 +1058,17 @@
     <a href="/checklist.html" class="btn btn-ghost" title="Analyst Checklists">&#9745; Analyst Checklists</a>
     <button class="btn btn-ghost editor-only" onclick="openSettingsModal()" title="Manage Owners">&#9881; Owners</button>
     <button class="btn btn-history" onclick="openHistoryModal()" title="View weekly history">&#9776; History</button>
-    <button class="btn btn-reset editor-only" onclick="resetWeek()" title="Archive goals and reset for new week">&#8634; Reset Week</button>
     <button class="btn btn-print" onclick="printView()" title="Print meeting view">&#9113; Print</button>
     <button class="btn btn-email" onclick="sendEmail()">&#9993; Email</button>
     <button class="btn btn-primary editor-only" onclick="openAddModal()">+ Add Task</button>
-    <button class="btn btn-icon btn-ghost editor-only" onclick="fullBackup()" title="Download full backup (tasks + checklists)">&#8681;</button>
-    <button class="btn btn-icon btn-ghost editor-only" onclick="importData()" title="Import JSON">&#8679;</button>
+    <div class="tools-menu-wrap editor-only" id="toolsMenuWrap">
+      <button class="btn btn-ghost" onclick="toggleToolsMenu()" title="More tools">&#8942;</button>
+      <div class="tools-dropdown" id="toolsDropdown">
+        <button class="tools-item" onclick="resetWeek();closeToolsMenu()">&#8634; Reset Week <span class="tools-item-hint">Archive goals for new week</span></button>
+        <button class="tools-item" onclick="fullBackup();closeToolsMenu()">&#8681; Download Backup</button>
+        <button class="tools-item" onclick="importData();closeToolsMenu()">&#8679; Import JSON</button>
+      </div>
+    </div>
     <input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
   </div>
 </div>
@@ -1330,13 +1351,14 @@ const COLLAPSED_KEY = 'nlhs_cp_collapsed';
 
 const ROLE_KEY = 'nlhs_cp_role';
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
-let userRole = localStorage.getItem(ROLE_KEY) || 'editor';
+let userRole = localStorage.getItem(ROLE_KEY) || '';
 let saveTimer = null;
 let searchTimer = null;
 let APP_PASSWORD_REQUIRED = false;
 let isEditingInline = false;
 
 function isViewer() { return userRole === 'viewer'; }
+function isEditor() { return userRole === 'editor'; }
 
 function normalizeTask(t) {
   if (!t.id) t.id = crypto.randomUUID();
@@ -1412,7 +1434,7 @@ async function doLogin() {
     const data = await res.json();
     if (data.ok) {
       authToken = data.token;
-      userRole = data.role || 'editor';
+      userRole = data.role || 'viewer'; // default to viewer if role not returned
       localStorage.setItem(TOKEN_KEY, authToken);
       localStorage.setItem(ROLE_KEY, userRole);
       document.getElementById('loginError').style.display = 'none';
@@ -1442,7 +1464,14 @@ async function checkAuth() {
       try {
         const roleRes = await fetch('/api/role', { headers: authHeaders() });
         const roleData = await roleRes.json();
-        if (roleData.role) { userRole = roleData.role; localStorage.setItem(ROLE_KEY, userRole); }
+        if (roleData.role && roleData.role !== 'none') {
+          userRole = roleData.role; localStorage.setItem(ROLE_KEY, userRole);
+        } else {
+          // Token invalid — force re-login
+          authToken = ''; userRole = '';
+          localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ROLE_KEY);
+          showLogin(); return false;
+        }
       } catch(e) {}
     }
   } catch(e) {}
@@ -1512,6 +1541,17 @@ async function switchToEditor() {
     }
   } catch(e) { alert('Could not verify password.'); }
 }
+
+function toggleToolsMenu() {
+  document.getElementById('toolsDropdown').classList.toggle('open');
+}
+function closeToolsMenu() {
+  document.getElementById('toolsDropdown').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('toolsMenuWrap');
+  if (wrap && !wrap.contains(e.target)) closeToolsMenu();
+});
 
 function syncOwnersFromTasks() {
   tasks.forEach(t => {
@@ -2633,7 +2673,7 @@ function clearAllFilters() {
 
 // ── Reset Week ──
 async function verifyAdmin(action) {
-  const pw = prompt(`Admin password required to ${action}:`);
+  const pw = prompt(`Editor password required to ${action}:`);
   if (!pw) return false;
   try {
     const res = await fetch('/api/login', {
@@ -2641,7 +2681,8 @@ async function verifyAdmin(action) {
       body: JSON.stringify({ password: pw })
     });
     const data = await res.json();
-    if (data.ok) return true;
+    if (data.ok && data.role === 'editor') return true;
+    if (data.ok && data.role === 'viewer') { alert('That is the view-only password. Editor password required.'); return false; }
     alert('Incorrect password.');
     return false;
   } catch(e) { alert('Could not verify password.'); return false; }

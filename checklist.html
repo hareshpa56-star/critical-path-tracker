@@ -289,6 +289,51 @@
     padding-top: 16px; border-top: 1px solid var(--border);
   }
 
+  /* Login overlay */
+  .login-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+  }
+  .login-overlay.open { display: flex; }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 36px; width: 360px; max-width: 95vw; text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+  .login-logo {
+    width: 48px; height: 48px; border-radius: 12px; background: var(--purple);
+    color: #fff; font-weight: 800; font-size: 15px; font-family: var(--font-display);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  }
+  .login-box h2 { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+  .login-box input[type="password"] {
+    width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 14px;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+    outline: none; font-family: var(--font-body); margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .login-box input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 700;
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    font-family: var(--font-body); transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--accent-hover); }
+  .login-error { font-size: 12px; color: var(--red); margin-top: 8px; display: none; }
+
+  /* Status banners */
+  .status-banner {
+    display: none; align-items: center; gap: 10px; padding: 8px 32px;
+    font-size: 12px; font-weight: 600; border-bottom: 1px solid;
+  }
+  .status-banner.viewer { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .status-banner.save-failed { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  [data-theme="dark"] .status-banner.viewer { background: #451a03; border-color: #78350f; color: #fbbf24; }
+  [data-theme="dark"] .status-banner.save-failed { background: #1f1215; border-color: #7f1d1d; color: #f87171; }
+  .status-banner .banner-dismiss { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 14px; color: inherit; opacity: 0.6; }
+  .status-banner .banner-dismiss:hover { opacity: 1; }
+
   /* Print */
   @media print {
     body { background: #fff !important; }
@@ -306,6 +351,28 @@
 </style>
 </head>
 <body>
+
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">CL</div>
+    <h2>Analyst Checklists</h2>
+    <p>Enter the team password to continue</p>
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- Status Banners -->
+<div class="status-banner viewer" id="viewerBanner">
+  &#128274; View-only mode — changes are not saved
+  <button class="banner-dismiss" onclick="switchToEditor()">Sign in as Editor</button>
+</div>
+<div class="status-banner save-failed" id="saveFailedBanner">
+  &#9888; Save failed — your changes were not persisted. You may not have edit access.
+  <button class="banner-dismiss" onclick="document.getElementById('saveFailedBanner').style.display='none'">&#10005;</button>
+</div>
 
 <div class="header">
   <div class="header-left">
@@ -354,13 +421,25 @@ const STATUS_COLORS = {
 
 const ROLE_KEY = 'nlhs_cp_role';
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
-let userRole = localStorage.getItem(ROLE_KEY) || 'editor';
+let userRole = localStorage.getItem(ROLE_KEY) || '';
 let checklistItems = [];
 let cpTasks = [];
 let saveTimer = null;
 let APP_PASSWORD_REQUIRED = false;
 
+// role='' or role='none' means unauthenticated; role='viewer' is read-only; role='editor' has full access
 function isViewer() { return userRole === 'viewer'; }
+function isEditor() { return userRole === 'editor'; }
+function isAuthed() { return userRole === 'editor' || userRole === 'viewer'; }
+
+// ── Normalize analyst name (fixes duplicate cards from whitespace/case variants) ──
+function normalizeAnalystName(name) {
+  return (name || '').trim().replace(/\s+/g, ' ');
+}
+// Safe DOM id from name (handles apostrophes, spaces, parens)
+function safeId(name) {
+  return normalizeAnalystName(name).replace(/[^a-zA-Z0-9]/g, '_');
+}
 
 // ── Theme ──
 function toggleTheme() {
@@ -387,7 +466,7 @@ function authHeaders() {
 }
 
 async function verifyAdmin(action) {
-  const pw = prompt(`Admin password required to ${action}:`);
+  const pw = prompt(`Editor password required to ${action}:`);
   if (!pw) return false;
   try {
     const res = await fetch('/api/login', {
@@ -395,33 +474,96 @@ async function verifyAdmin(action) {
       body: JSON.stringify({ password: pw })
     });
     const data = await res.json();
-    if (data.ok) return true;
+    if (data.ok && data.role === 'editor') return true;
+    if (data.ok && data.role === 'viewer') { alert('That is the view-only password. Editor password required.'); return false; }
     alert('Incorrect password.');
     return false;
   } catch(e) { alert('Could not verify password.'); return false; }
+}
+
+function showLogin() { document.getElementById('loginOverlay').classList.add('open'); setTimeout(() => document.getElementById('loginPassword').focus(), 50); }
+function hideLogin() { document.getElementById('loginOverlay').classList.remove('open'); }
+
+async function doLogin() {
+  const pw = document.getElementById('loginPassword').value;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      authToken = data.token;
+      userRole = data.role || 'editor';
+      localStorage.setItem(TOKEN_KEY, authToken);
+      localStorage.setItem(ROLE_KEY, userRole);
+      document.getElementById('loginError').style.display = 'none';
+      document.getElementById('loginPassword').value = '';
+      hideLogin();
+      await loadData();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginPassword').focus();
+    }
+  } catch(e) { document.getElementById('loginError').style.display = 'block'; }
+}
+
+async function switchToEditor() {
+  const pw = prompt('Enter editor password:');
+  if (!pw) return;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (data.ok && data.role === 'editor') {
+      authToken = data.token; userRole = 'editor';
+      localStorage.setItem(TOKEN_KEY, authToken); localStorage.setItem(ROLE_KEY, userRole);
+      applyViewerMode(); render();
+    } else if (data.ok) { alert('That is the view-only password. Enter the editor password.'); }
+    else { alert('Incorrect password.'); }
+  } catch(e) { alert('Could not verify.'); }
 }
 
 // ── API ──
 async function fetchChecklist() {
   try {
     const res = await fetch(CHECKLIST_URL, { headers: authHeaders() });
+    if (res.status === 401) { showLogin(); return null; }
     if (res.ok) return await res.json();
   } catch(e) {}
   return [];
 }
 async function pushChecklist() {
   try {
-    await fetch(CHECKLIST_URL, { method: 'POST', headers: authHeaders(), body: JSON.stringify(checklistItems) });
-  } catch(e) {}
+    const res = await fetch(CHECKLIST_URL, { method: 'POST', headers: authHeaders(), body: JSON.stringify(checklistItems) });
+    if (!res.ok) {
+      const banner = document.getElementById('saveFailedBanner');
+      if (banner) banner.style.display = 'flex';
+      return false;
+    }
+    // Clear any previous save-failed banner on success
+    const banner = document.getElementById('saveFailedBanner');
+    if (banner) banner.style.display = 'none';
+    return true;
+  } catch(e) {
+    const banner = document.getElementById('saveFailedBanner');
+    if (banner) banner.style.display = 'flex';
+    return false;
+  }
 }
 async function fetchTasks() {
   try {
     const res = await fetch(TASKS_URL, { headers: authHeaders() });
+    if (res.status === 401) { showLogin(); return null; }
     if (res.ok) return await res.json();
   } catch(e) {}
   return [];
 }
 function save() {
+  if (isViewer()) return; // never save in viewer mode
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => { await pushChecklist(); }, 400);
 }
@@ -434,56 +576,85 @@ async function init() {
     const authData = await authRes.json();
     APP_PASSWORD_REQUIRED = authData.required;
   } catch(e) {}
+
+  if (APP_PASSWORD_REQUIRED) {
+    // Verify token is still valid and get role
+    if (authToken) {
+      try {
+        const roleRes = await fetch('/api/role', { headers: authHeaders() });
+        const roleData = await roleRes.json();
+        if (roleData.role && roleData.role !== 'none') {
+          userRole = roleData.role;
+          localStorage.setItem(ROLE_KEY, userRole);
+        } else {
+          // Token invalid or no role — force login
+          authToken = ''; userRole = '';
+          localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ROLE_KEY);
+          showLogin(); return;
+        }
+      } catch(e) { showLogin(); return; }
+    } else {
+      showLogin(); return;
+    }
+  }
+
+  await loadData();
+}
+
+async function loadData() {
   const [cl, tasks] = await Promise.all([fetchChecklist(), fetchTasks()]);
+  if (cl === null || tasks === null) return; // 401 — login shown
   checklistItems = cl || [];
-  cpTasks = tasks || [];
-  // Check role from server
-  try {
-    const roleRes = await fetch('/api/role', { headers: authHeaders() });
-    const roleData = await roleRes.json();
-    if (roleData.role) { userRole = roleData.role; localStorage.setItem(ROLE_KEY, userRole); }
-  } catch(e) {}
+  cpTasks = (tasks || []).map(t => ({ ...t, analystOwner: normalizeAnalystName(t.analystOwner || '') }));
   render();
   applyViewerMode();
 }
 
 function applyViewerMode() {
   const editEls = document.querySelectorAll('.editor-only');
+  const viewBanner = document.getElementById('viewerBanner');
   if (isViewer()) {
     editEls.forEach(el => el.style.display = 'none');
+    if (viewBanner) viewBanner.style.display = 'flex';
   } else {
     editEls.forEach(el => el.style.display = '');
+    if (viewBanner) viewBanner.style.display = 'none';
   }
 }
 
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'loginPassword') doLogin();
+});
+
 // ── Get analysts (syncs with Customer Owners from Settings) ──
 function getAnalysts() {
-  const fromChecklist = checklistItems.map(i => i.analyst);
+  const fromChecklist = checklistItems.map(i => normalizeAnalystName(i.analyst)).filter(Boolean);
   // Pull from Customer Owners in localStorage (same list as tracker Settings)
   let fromSettings = [];
   try {
     const saved = JSON.parse(localStorage.getItem('nlhs_cp_owners') || '{}');
-    if (saved.customer) fromSettings = saved.customer;
+    if (saved.customer) fromSettings = saved.customer.map(normalizeAnalystName).filter(Boolean);
   } catch(e) {}
   // Also pull from task data, splitting comma-separated owners
   const fromTasks = cpTasks.flatMap(t =>
-    (t.analystOwner || '').split(',').map(s => s.trim())
+    (t.analystOwner || '').split(',').map(s => normalizeAnalystName(s))
   ).filter(n => n && n !== 'N/A' && n !== 'TBD' && n !== 'All');
   return [...new Set([...fromSettings, ...fromChecklist, ...fromTasks])].sort();
 }
 
 // ── Get linked critical path tasks for an analyst ──
 function getLinkedTasks(analyst) {
+  const norm = normalizeAnalystName(analyst);
   return cpTasks.filter(t => {
-    const owners = (t.analystOwner || '').split(',').map(s => s.trim());
-    return owners.includes(analyst) && t.status !== 'Done';
+    const owners = (t.analystOwner || '').split(',').map(s => normalizeAnalystName(s));
+    return owners.includes(norm) && t.status !== 'Done';
   });
 }
 
 function toggleLinked(analyst) {
-  const safeId = analyst.replace(/\s/g, '_').replace(/'/g, '');
-  const tasks = document.getElementById('linkedTasks-' + safeId);
-  const arrow = document.getElementById('linkedArrow-' + safeId);
+  const sid = safeId(analyst);
+  const tasks = document.getElementById('linkedTasks-' + sid);
+  const arrow = document.getElementById('linkedArrow-' + sid);
   if (tasks) {
     tasks.classList.toggle('collapsed');
     if (arrow) arrow.classList.toggle('open', !tasks.classList.contains('collapsed'));
@@ -527,13 +698,13 @@ function render() {
       </div>`;
 
     // Linked critical path tasks
+    const sid = safeId(analyst);
     if (linked.length > 0) {
-      const safeAnalyst = analyst.replace(/'/g,"\\'");
-      html += `<div class="analyst-linked" onclick="toggleLinked('${safeAnalyst}')">
-        <span class="toggle-arrow" id="linkedArrow-${esc(analyst).replace(/\s/g,'_')}">&#9654;</span>
+      html += `<div class="analyst-linked" onclick="toggleLinked(${JSON.stringify(analyst)})">
+        <span class="toggle-arrow" id="linkedArrow-${sid}">&#9654;</span>
         Show Linked Critical Path Items (${linked.length})
       </div>
-        <div class="linked-tasks collapsed" id="linkedTasks-${esc(analyst).replace(/\s/g,'_')}">`;
+        <div class="linked-tasks collapsed" id="linkedTasks-${sid}">`;
       linked.forEach(t => {
         const color = STATUS_COLORS[t.status] || '#666';
         html += `<a class="linked-chip" href="/critical_path.html" title="${esc(t.task)} - ${esc(t.status)}${t.goal ? '\nGoal: ' + t.goal : ''}">
@@ -572,12 +743,12 @@ function render() {
     // Add item row (editors only)
     if (!v) {
       html += `<div class="add-item-row">
-        <input type="text" id="addInput-${esc(analyst).replace(/\s/g,'_')}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem('${analyst.replace(/'/g,"\\'")}')">
-        <select id="addLink-${esc(analyst).replace(/\s/g,'_')}">
+        <input type="text" id="addInput-${sid}" placeholder="Add checklist item..." onkeydown="if(event.key==='Enter')addItem(${JSON.stringify(analyst)})">
+        <select id="addLink-${sid}">
           <option value="">Link task...</option>
           ${taskOpts}
         </select>
-        <button onclick="addItem('${analyst.replace(/'/g,"\\'")}')">+ Add</button>
+        <button onclick="addItem(${JSON.stringify(analyst)})">+ Add</button>
       </div>`;
     }
 
@@ -610,14 +781,14 @@ function deleteItem(idx) {
 }
 
 function addItem(analyst) {
-  const safeId = analyst.replace(/\s/g, '_').replace(/'/g, '');
-  const input = document.getElementById('addInput-' + safeId);
-  const linkSel = document.getElementById('addLink-' + safeId);
+  const sid = safeId(analyst);
+  const input = document.getElementById('addInput-' + sid);
+  const linkSel = document.getElementById('addLink-' + sid);
   const text = input ? input.value.trim() : '';
   if (!text) return;
   checklistItems.push({
     id: crypto.randomUUID(),
-    analyst: analyst,
+    analyst: normalizeAnalystName(analyst),
     text: text,
     done: false,
     linkedTaskId: linkSel ? linkSel.value : '',
@@ -627,7 +798,7 @@ function addItem(analyst) {
   render();
   // Re-focus the input after render
   setTimeout(() => {
-    const el = document.getElementById('addInput-' + safeId);
+    const el = document.getElementById('addInput-' + sid);
     if (el) el.focus();
   }, 50);
 }
@@ -652,7 +823,7 @@ function closeModal() {
   document.getElementById('addAnalystModal').classList.remove('open');
 }
 function addAnalyst() {
-  const name = document.getElementById('newAnalystName').value.trim();
+  const name = normalizeAnalystName(document.getElementById('newAnalystName').value);
   if (!name) { alert('Name is required'); return; }
   // Add a placeholder item so the analyst shows up
   checklistItems.push({

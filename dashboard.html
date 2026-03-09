@@ -485,8 +485,13 @@ function computeMetrics(tasks) {
   const reviewed = tasks.filter(t => t.reviewed).length;
   const noGoal = tasks.filter(t => (!t.goal||!t.goal.trim()) && t.status!=='Done').length;
   const active = tasks.filter(t => !['Done','Not Started'].includes(t.status)).length;
-  const epicOwners = [...new Set(tasks.map(t => t.epicOwner.split('/')[0].split('(')[0].trim()).filter(Boolean))];
-  const customerOwners = [...new Set(tasks.map(t => t.analystOwner).filter(n => n && n!=='N/A' && n!=='TBD' && n!=='All'))];
+  // Split comma-separated multi-owner fields
+  const epicOwners = [...new Set(tasks.flatMap(t =>
+    (t.epicOwner||'').split(',').map(s => s.trim()).filter(Boolean)
+  ))];
+  const customerOwners = [...new Set(tasks.flatMap(t =>
+    (t.analystOwner||'').split(',').map(s => s.trim()).filter(n => n && n!=='N/A' && n!=='TBD' && n!=='All')
+  ))];
   return { total, done, overdue, dueSoon, highPri, pct, reviewed, noGoal, active, epicOwners, customerOwners };
 }
 
@@ -531,12 +536,13 @@ function renderDonut(items, colorMap, total, title, desc, centerVal, centerLabel
 }
 
 function renderOwnerTable(tasks, epicOwners, m) {
-  const maxT = Math.max(...epicOwners.map(o => tasks.filter(t=>t.epicOwner.includes(o)).length),1);
+  const ownerMatch = (t, o) => (t.epicOwner||'').split(',').map(s=>s.trim()).includes(o);
+  const maxT = Math.max(...epicOwners.map(o => tasks.filter(t=>ownerMatch(t,o)).length),1);
   let html = `<div class="card grid-full anim anim-d6">
     <div class="card-head"><div><div class="card-title">Owner Performance Matrix</div><div class="card-desc">Detailed workload, risk, and progress metrics per Epic owner</div></div></div>
     <table class="dtable"><thead><tr><th>Owner</th><th>Total</th><th>Done</th><th>Active</th><th>Overdue</th><th>High Pri</th><th>No Goal</th><th style="width:200px">Relative Load</th></tr></thead><tbody>`;
   epicOwners.forEach(owner => {
-    const ot = tasks.filter(t => t.epicOwner.includes(owner));
+    const ot = tasks.filter(t => ownerMatch(t, owner));
     const od = ot.filter(t=>t.status==='Done').length;
     const oa = ot.filter(t=>!['Done','Not Started'].includes(t.status)).length;
     const oo = ot.filter(t=>isOverdue(t)).length;
@@ -635,8 +641,10 @@ function render(tasks) {
   ].filter(x=>x.c>0);
 
   const html = [
-    renderStackedBars(tasks, m.epicOwners, m.total, 'Epic Owner Workload', 'Tasks by status per Epic owner', 'anim-d2', (t,o) => t.epicOwner.includes(o)),
-    renderStackedBars(tasks, m.customerOwners, m.total, 'Customer Workload', 'Tasks by status per customer analyst', 'anim-d3', (t,o) => t.analystOwner===o),
+    renderStackedBars(tasks, m.epicOwners, m.total, 'Epic Owner Workload', 'Tasks by status per Epic owner', 'anim-d2',
+      (t,o) => (t.epicOwner||'').split(',').map(s=>s.trim()).includes(o)),
+    renderStackedBars(tasks, m.customerOwners, m.total, 'Customer Workload', 'Tasks by status per customer analyst', 'anim-d3',
+      (t,o) => (t.analystOwner||'').split(',').map(s=>s.trim()).includes(o)),
     renderDonut(statusItems, STATUS_COLORS, m.total, 'Status Distribution', 'Current state of all tasks', m.total, 'Tasks', 'var(--text)', 'anim-d4'),
     renderDonut(priItems, PRIORITY_COLORS, m.total, 'Priority Breakdown', 'Risk distribution across tasks', m.highPri, 'High', 'var(--red)', 'anim-d5'),
     renderOwnerTable(tasks, m.epicOwners, m),
