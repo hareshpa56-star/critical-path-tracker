@@ -1368,6 +1368,7 @@ const OWNERS_KEY = 'nlhs_cp_owners';
 const THEME_KEY = 'nlhs_cp_theme';
 const TOKEN_KEY = 'nlhs_cp_token';
 const COLLAPSED_KEY = 'nlhs_cp_collapsed';
+const LOCAL_TASKS_KEY = 'nlhs_cp_tasks_offline';
 
 const ROLE_KEY = 'nlhs_cp_role';
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
@@ -1376,6 +1377,7 @@ let saveTimer = null;
 let searchTimer = null;
 let APP_PASSWORD_REQUIRED = false;
 let isEditingInline = false;
+let pendingSync = false; // true when local changes haven't reached server yet
 
 function isViewer() { return userRole === 'viewer'; }
 function isEditor() { return userRole === 'editor'; }
@@ -1447,8 +1449,11 @@ async function fetchTasks() {
 async function pushTasks() {
   try {
     const res = await fetchWithTimeout(API_URL, { method: 'POST', headers: authHeaders(), body: JSON.stringify(tasks) });
-    if (res && res.status === 401) { showLogin(); }
+    if (!res) return false;
+    if (res.status === 401) { showLogin(); return false; }
+    return res.ok;
   } catch(e) {}
+  return false;
 }
 
 // ── Login ──
@@ -1530,21 +1535,18 @@ async function init() {
   const serverData = await fetchTasks();
   if (serverData && serverData.length > 0) {
     tasks = serverData;
+    localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasks)); // cache for offline use
     el.textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
   } else if (serverData === null) {
-    // Server unreachable (cold start) — show last known data or seed data
-    tasks = INITIAL_DATA.map(t => normalizeTask({...t}));
-    el.innerHTML = 'Server starting up\u2026 <button onclick="retryConnect()" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:inherit;color:var(--accent)">Retry</button>';
-    // Auto-retry every 20s until connected
-    window._retryTimer = setInterval(async () => {
-      const d = await fetchTasks();
-      if (d && d.length > 0) {
-        clearInterval(window._retryTimer);
-        tasks = d; tasks.forEach(normalizeTask);
-        buildFilters(); renderTable();
-        document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
-      }
-    }, 20000);
+    // Server unreachable — load from local cache if available
+    const cached = localStorage.getItem(LOCAL_TASKS_KEY);
+    if (cached) {
+      try { tasks = JSON.parse(cached); pendingSync = false; } catch(e) { tasks = []; }
+    } else {
+      tasks = INITIAL_DATA.map(t => normalizeTask({...t}));
+    }
+    setOfflineStatus();
+    window._retryTimer = setInterval(attemptSync, 20000);
   } else {
     tasks = INITIAL_DATA.map(t => normalizeTask({...t}));
     await pushTasks();
@@ -1649,43 +1651,76 @@ function renameSection(oldName) {
   save(); buildFilters(); populateQuickAdd(); renderTable();
 }
 
+// ── Offline / sync helpers ──
+function setOfflineStatus() {
+  const hasPending = pendingSync;
+  document.getElementById('lastUpdated').innerHTML =
+    (hasPending ? '&#9888; Offline &mdash; unsaved changes &nbsp;' : '&#9900; Offline &mdash; cached data &nbsp;') +
+    '<button onclick="attemptSync()" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:inherit;color:var(--accent)">Retry</button>';
+}
+
+async function attemptSync() {
+  const el = document.getElementById('lastUpdated');
+  el.textContent = 'Syncing\u2026';
+  if (pendingSync) {
+    // Push local changes to server first
+    const ok = await pushTasks();
+    if (ok) {
+      pendingSync = false;
+      localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasks));
+    } else {
+      setOfflineStatus(); return;
+    }
+  } else {
+    // Just reconnect and pull latest
+    const d = await fetchTasks();
+    if (d && d.length > 0) {
+      tasks = d; tasks.forEach(normalizeTask);
+      localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasks));
+      buildFilters(); renderTable();
+    } else {
+      setOfflineStatus(); return;
+    }
+  }
+  clearInterval(window._retryTimer); window._retryTimer = null;
+  el.textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+  if (!window._autoRefreshTimer) window._autoRefreshTimer = setInterval(autoRefresh, 15000);
+}
+
 async function autoRefresh() {
-  // Skip refresh while user is editing inline (goal textarea or update input)
+  if (pendingSync) { attemptSync(); return; } // prioritise syncing over pulling
   const active = document.activeElement;
   if (active && (active.classList.contains('goal-edit-input') || active.id?.startsWith('inlineUpdateInput'))) return;
   const serverData = await fetchTasks();
   if (serverData && serverData.length > 0) {
-    tasks = serverData;
-    tasks.forEach(normalizeTask);
-    buildFilters();
-    renderTable();
-    document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
-  }
-}
-
-async function retryConnect() {
-  document.getElementById('lastUpdated').textContent = 'Retrying\u2026';
-  const d = await fetchTasks();
-  if (d && d.length > 0) {
-    clearInterval(window._retryTimer);
-    window._retryTimer = null;
-    tasks = d; tasks.forEach(normalizeTask);
+    tasks = serverData; tasks.forEach(normalizeTask);
+    localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasks));
     buildFilters(); renderTable();
     document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
-    setInterval(autoRefresh, 15000);
-  } else {
-    document.getElementById('lastUpdated').innerHTML = 'Server starting up\u2026 <button onclick="retryConnect()" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:inherit;color:var(--accent)">Retry</button>';
+  } else if (serverData === null && !pendingSync) {
+    setOfflineStatus();
   }
 }
 
 function save() {
-  document.getElementById('lastUpdated').textContent = 'Saving...';
+  // Always persist to localStorage immediately — survives offline
+  try { localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasks)); } catch(e) {}
+  pendingSync = true;
+  document.getElementById('lastUpdated').textContent = 'Saving\u2026';
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
-    await pushTasks();
-    document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+    const ok = await pushTasks();
+    if (ok) {
+      pendingSync = false;
+      document.getElementById('lastUpdated').textContent = 'Live \u00B7 ' + new Date().toLocaleTimeString();
+    } else {
+      setOfflineStatus(); // server unreachable — show offline status with Retry
+    }
   }, 400);
 }
+
+// Auto-sync when browser regains network
+window.addEventListener('online', () => { if (pendingSync || window._retryTimer) attemptSync(); });
 
 // ── Filters ──
 function buildFilterSelect(el, options, activeVal) {
